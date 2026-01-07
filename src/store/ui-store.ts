@@ -4,6 +4,10 @@ interface UIStore {
   isSidebarCollapsed: boolean;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  // Mobile sidebar drawer state
+  isMobileSidebarOpen: boolean;
+  setMobileSidebarOpen: (open: boolean) => void;
+  toggleMobileSidebar: () => void;
   // Navigation state for loading feedback
   isNavigating: boolean;
   navigatingToChatId: string | null;
@@ -15,6 +19,11 @@ export const useUIStore = create<UIStore>((set) => ({
   toggleSidebar: () =>
     set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
+  // Mobile sidebar drawer state
+  isMobileSidebarOpen: false,
+  setMobileSidebarOpen: (open) => set({ isMobileSidebarOpen: open }),
+  toggleMobileSidebar: () =>
+    set((state) => ({ isMobileSidebarOpen: !state.isMobileSidebarOpen })),
   // Navigation state
   isNavigating: false,
   navigatingToChatId: null,
