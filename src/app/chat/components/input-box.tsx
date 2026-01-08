@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ChatStatus } from "ai";
-import { ArrowUp, CircleStop, Plus, X } from "lucide-react";
+import { ArrowUp, CircleStop, Plus, X, Settings } from "lucide-react";
 import { useRef, useState, useCallback, memo, useEffect } from "react";
 import Image from "next/image";
 import {
@@ -14,11 +14,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useModelStore } from "@/store/chat";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { UserModelConfig } from "@/types/chat";
 
 interface InputBoxProps {
   onSubmit: (text: string, attachments: File[]) => void;
@@ -41,7 +44,9 @@ export default function InputBox({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { currentModelId, modelList, setCurrentModelId } = useModelStore();
+  const { currentModelId, modelList, setCurrentModelId, isLoading } =
+    useModelStore();
+  const router = useRouter();
   const currentModel =
     modelList.find((model) => model.id === currentModelId) || modelList[0];
 
@@ -116,6 +121,11 @@ export default function InputBox({
   const handleSend = () => {
     if (!input.trim() && files.length === 0) return;
 
+    if (!currentModelId || modelList.length === 0) {
+      toast.error("请先配置模型");
+      return;
+    }
+
     const message = input.trim();
     onSubmit(message, files);
     setInput("");
@@ -172,7 +182,7 @@ export default function InputBox({
         />
 
         <div className="flex items-center justify-between gap-2">
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <Button
               title="请上传图片，支持拖拽粘贴"
               size="sm"
@@ -185,31 +195,58 @@ export default function InputBox({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  title="Select model"
+                  title="选择模型"
                   size="sm"
                   variant="ghost"
-                  className="max-w-[120px]"
+                  className="max-w-30 gap-1.5 outline-none"
                 >
+                  {!isLoading && modelList.length > 0 && currentModel && (
+                    <ModelLogo model={currentModel} size="sm" />
+                  )}
                   <span className="truncate text-xs">
-                    {currentModel?.name || "Select Model"}
+                    {isLoading
+                      ? "加载中..."
+                      : modelList.length === 0
+                        ? "请配置模型"
+                        : currentModel?.name || "选择模型"}
                   </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-60">
-                {modelList.map((model) => (
+                {modelList.length === 0 ? (
                   <DropdownMenuItem
-                    key={model.id}
-                    onSelect={() => setCurrentModelId(model.id)}
-                    className={cn(
-                      "hover:bg-accent/20 flex cursor-pointer flex-col items-start p-2",
-                      model.id === currentModelId
-                        ? "bg-accent text-accent-foreground"
-                        : "",
-                    )}
+                    onSelect={() => router.push("/settings/models")}
+                    className="text-muted-foreground"
                   >
-                    <span className="text-sm">{model.name}</span>
+                    暂无模型，点击配置
                   </DropdownMenuItem>
-                ))}
+                ) : (
+                  <>
+                    {modelList.map((model) => (
+                      <DropdownMenuItem
+                        key={model.id}
+                        onSelect={() => setCurrentModelId(model.id)}
+                        className={cn(
+                          "hover:bg-accent/20 flex cursor-pointer items-center gap-2 p-2",
+                          model.id === currentModelId
+                            ? "bg-accent text-accent-foreground"
+                            : "",
+                        )}
+                      >
+                        <ModelLogo model={model} size="md" />
+                        <span className="text-sm">{model.name}</span>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => router.push("/settings/models")}
+                      className="text-muted-foreground"
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      管理模型
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -274,3 +311,35 @@ const FilesPreview = memo(function ({
   );
 });
 FilesPreview.displayName = "FilesPreview";
+
+const ModelLogo = memo(function ({
+  model,
+  size = "sm",
+}: {
+  model: UserModelConfig | undefined;
+  size?: "sm" | "md";
+}) {
+  const sizeClass = size === "sm" ? "size-4" : "size-5";
+
+  if (!model?.logoUrl) {
+    return null;
+  }
+
+  return (
+    <div
+      className={cn(
+        "relative flex-shrink-0 overflow-hidden rounded",
+        sizeClass,
+      )}
+    >
+      <Image
+        src={model.logoUrl}
+        alt={model.name}
+        width={size === "sm" ? 16 : 20}
+        height={size === "sm" ? 16 : 20}
+        className="size-full object-cover"
+      />
+    </div>
+  );
+});
+ModelLogo.displayName = "ModelLogo";

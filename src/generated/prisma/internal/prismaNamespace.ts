@@ -386,7 +386,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   Chat: 'Chat',
-  Message: 'Message'
+  Message: 'Message',
+  UserModel: 'UserModel'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -402,7 +403,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "chat" | "message"
+    modelProps: "user" | "chat" | "message" | "userModel"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -628,6 +629,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    UserModel: {
+      payload: Prisma.$UserModelPayload<ExtArgs>
+      fields: Prisma.UserModelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserModelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserModelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload>
+        }
+        findFirst: {
+          args: Prisma.UserModelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserModelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload>
+        }
+        findMany: {
+          args: Prisma.UserModelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload>[]
+        }
+        create: {
+          args: Prisma.UserModelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload>
+        }
+        createMany: {
+          args: Prisma.UserModelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserModelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload>[]
+        }
+        delete: {
+          args: Prisma.UserModelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload>
+        }
+        update: {
+          args: Prisma.UserModelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserModelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserModelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserModelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserModelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserModelPayload>
+        }
+        aggregate: {
+          args: Prisma.UserModelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserModel>
+        }
+        groupBy: {
+          args: Prisma.UserModelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserModelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserModelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserModelCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -703,6 +778,24 @@ export const MessageScalarFieldEnum = {
 } as const
 
 export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
+
+
+export const UserModelScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  modelId: 'modelId',
+  baseURL: 'baseURL',
+  apiKey: 'apiKey',
+  description: 'description',
+  logoUrl: 'logoUrl',
+  systemPrompt: 'systemPrompt',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserModelScalarFieldEnum = (typeof UserModelScalarFieldEnum)[keyof typeof UserModelScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -805,6 +898,13 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -919,6 +1019,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   chat?: Prisma.ChatOmit
   message?: Prisma.MessageOmit
+  userModel?: Prisma.UserModelOmit
 }
 
 /* Types for Logging */

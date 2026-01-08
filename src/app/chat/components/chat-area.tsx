@@ -193,6 +193,11 @@ export default function ChatArea({
   }, [messages, status, scrollToBottom]);
 
   const handleSendMessage = async (inputValue: string, attachments: File[]) => {
+    // Ensure model is selected
+    if (!currentModelId) {
+      return;
+    }
+
     shouldAutoScrollRef.current = true;
     setShowScrollButton(false);
 

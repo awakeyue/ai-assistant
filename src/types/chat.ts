@@ -18,6 +18,32 @@ export interface ModelInfo {
   baseURL: string;
 }
 
+// User model configuration from database
+export interface UserModelConfig {
+  id: string;
+  name: string;
+  modelId: string;
+  baseURL: string;
+  apiKey: string; // Will be masked for display
+  description?: string;
+  logoUrl?: string; // Model logo URL from Supabase Storage
+  systemPrompt?: string; // System prompt for the model
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Form data for creating/updating user model
+export interface UserModelFormData {
+  name: string;
+  modelId: string;
+  baseURL: string;
+  apiKey: string;
+  description?: string;
+  logoUrl?: string; // Model logo URL
+  systemPrompt?: string; // System prompt
+}
+
 export interface DbMessage {
   id: string;
   role: string;

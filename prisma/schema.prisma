@@ -24,6 +24,7 @@ model User {
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   chats         Chat[]
+  userModels    UserModel[]
 
   @@map("users")
 }
@@ -55,4 +56,24 @@ model Message {
 
   @@index([chatId])
   @@map("messages")
+}
+
+model UserModel {
+  id          String   @id @default(cuid())
+  userId      Int      @map("user_id")
+  name        String   // Display name for the model
+  modelId     String   @map("model_id") // Model endpoint ID for API calls
+  baseURL     String   @map("base_url") // API base URL
+  apiKey      String   @map("api_key") // Encrypted API key
+  description String?  // Optional description
+  logoUrl     String?  @map("logo_url") // Model logo URL from Supabase Storage
+  systemPrompt String? @map("system_prompt") @db.Text // System prompt for the model
+  isDefault   Boolean  @default(false) @map("is_default") // Default model flag
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_models")
 }

@@ -9,6 +9,7 @@ import {
   User,
   Loader2,
   PanelLeft,
+  Settings2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -258,6 +259,14 @@ const SidebarContent = ({
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            onClick={() => (window.location.href = "/settings/models")}
+            className="flex cursor-pointer items-center gap-2"
+          >
+            <Settings2 size={16} />
+            模型管理
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
             onClick={handleSignOut}
             className="flex cursor-pointer items-center gap-2 text-red-600 focus:text-red-600"
           >
@@ -290,8 +299,13 @@ export default function Sidebar({ user }: SidebarProps) {
     ? pathname.slice(6)
     : null;
 
-  const { setCurrentModelId, modelList } = useModelStore();
+  const { setCurrentModelId, modelList, fetchModels } = useModelStore();
   const { triggerReset } = useChatStatusStore();
+
+  // Load models when component mounts (user logs in)
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels]);
 
   // Use SWR to fetch chat list
   const { data: chatHistorys, mutate } = useSWR("chat-list", getUserChatList, {

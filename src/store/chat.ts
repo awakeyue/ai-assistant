@@ -1,4 +1,4 @@
-import { Chatdata, ModelInfo } from "@/types/chat";
+import { Chatdata, UserModelConfig } from "@/types/chat";
 import { create } from "zustand";
 
 interface ChatHistoryStoreProps {
@@ -54,39 +54,115 @@ export const useChatHistoryStore = create<ChatHistoryStoreProps>()((set) => ({
 }));
 
 interface ModelStoreProps {
-  currentModelId: string;
-  modelList: ModelInfo[];
+  currentModelId: string | null;
+  modelList: UserModelConfig[];
+  isLoading: boolean;
+  error: string | null;
   setCurrentModelId: (modelId: string) => void;
-  setModelList: (modelList: ModelInfo[]) => void;
+  setModelList: (modelList: UserModelConfig[]) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  fetchModels: () => Promise<void>;
+  addModel: (model: UserModelConfig) => void;
+  updateModel: (id: string, model: Partial<UserModelConfig>) => void;
+  removeModel: (id: string) => void;
+  setDefaultModel: (id: string) => void;
 }
 
-export const useModelStore = create<ModelStoreProps>()((set) => ({
-  currentModelId: "ep-20251203173341-sztlm",
-  modelList: [
-    {
-      id: "ep-20251203173341-sztlm",
-      name: "Kimi-K2",
-      description: "Kimi-K2",
-      apiKey: process.env.AI_GATEWAY_API_KEY as string,
-      baseURL: "https://ark.cn-beijing.volces.com/api/v3",
-    },
-    {
-      id: "ep-20251124145531-b7dkr",
-      name: "Doubao-Seed-1.6(深度思考)",
-      description: "豆包大模型",
-      apiKey: process.env.AI_GATEWAY_API_KEY as string,
-      baseURL: "https://ark.cn-beijing.volces.com/api/v3",
-    },
-    {
-      id: "ep-20251120155412-jmc8q",
-      name: "Doubao-lite-32k",
-      description: "豆包大模型",
-      apiKey: process.env.AI_GATEWAY_API_KEY as string,
-      baseURL: "https://ark.cn-beijing.volces.com/api/v3",
-    },
-  ],
+export const useModelStore = create<ModelStoreProps>()((set, get) => ({
+  currentModelId: null,
+  modelList: [],
+  isLoading: true,
+  error: null,
+
   setCurrentModelId: (modelId) => set({ currentModelId: modelId }),
-  setModelList: (modelList) => set({ modelList }),
+
+  setModelList: (modelList) => {
+    // If currentModelId is not set or not in the list, set to default model
+    const state = get();
+    let newCurrentModelId = state.currentModelId;
+
+    if (modelList.length > 0) {
+      const currentExists = modelList.some(
+        (m) => m.id === state.currentModelId,
+      );
+      if (!currentExists) {
+        const defaultModel = modelList.find((m) => m.isDefault);
+        newCurrentModelId = defaultModel?.id || modelList[0]?.id || null;
+      }
+    } else {
+      newCurrentModelId = null;
+    }
+
+    set({ modelList, currentModelId: newCurrentModelId });
+  },
+
+  setLoading: (loading) => set({ isLoading: loading }),
+
+  setError: (error) => set({ error }),
+
+  fetchModels: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch("/api/models");
+      if (!response.ok) {
+        if (response.status === 401) {
+          set({ modelList: [], isLoading: false, currentModelId: null });
+          return;
+        }
+        throw new Error("Failed to fetch models");
+      }
+      const models: UserModelConfig[] = await response.json();
+      get().setModelList(models);
+      set({ isLoading: false });
+    } catch (error) {
+      console.error("Failed to fetch models:", error);
+      set({
+        error:
+          error instanceof Error ? error.message : "Failed to fetch models",
+        isLoading: false,
+      });
+    }
+  },
+
+  addModel: (model) =>
+    set((state) => {
+      const newList = [...state.modelList, model];
+      // If this is the first model, set it as current
+      const newCurrentId =
+        state.currentModelId ||
+        (model.isDefault ? model.id : state.currentModelId);
+      return { modelList: newList, currentModelId: newCurrentId || model.id };
+    }),
+
+  updateModel: (id, updates) =>
+    set((state) => ({
+      modelList: state.modelList.map((model) =>
+        model.id === id ? { ...model, ...updates } : model,
+      ),
+    })),
+
+  removeModel: (id) =>
+    set((state) => {
+      const newList = state.modelList.filter((model) => model.id !== id);
+      let newCurrentId = state.currentModelId;
+
+      // If removed model was current, switch to default or first
+      if (state.currentModelId === id) {
+        const defaultModel = newList.find((m) => m.isDefault);
+        newCurrentId = defaultModel?.id || newList[0]?.id || null;
+      }
+
+      return { modelList: newList, currentModelId: newCurrentId };
+    }),
+
+  setDefaultModel: (id) =>
+    set((state) => ({
+      modelList: state.modelList.map((model) => ({
+        ...model,
+        isDefault: model.id === id,
+      })),
+    })),
 }));
 
 interface ChatStatusStore {
