@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI聊天助手",
-  description: "AI聊天助手",
+  title: "AI智能对话助手",
+  description: "AI智能对话助手",
 };
 
 export default async function RootLayout({
