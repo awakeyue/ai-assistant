@@ -4,7 +4,6 @@ import {
   Plus,
   Trash2,
   MoreVertical,
-  MessageSquareText,
   Loader2,
   PanelLeft,
   Pencil,
