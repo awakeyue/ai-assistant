@@ -7,6 +7,7 @@ import {
   MessageSquareText,
   Loader2,
   PanelLeft,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,15 +17,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useModelStore, useChatStatusStore } from "@/store/chat";
-import { deleteChat, getUserChatList } from "@/actions/chat";
+import { deleteChat, getUserChatList, updateChatTitle } from "@/actions/chat";
 import { signOut } from "@/actions/auth";
 import { useRouter, usePathname } from "next/navigation";
 import useSWR from "swr";
 import { useUIStore } from "@/store/ui-store";
-import { useTransition, useEffect } from "react";
+import { useTransition, useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { User as UserInfo } from "@/types/user";
 import { useUserStore } from "@/store/user";
@@ -43,6 +53,7 @@ interface SidebarContentProps {
   currentChatId: string | null;
   handleSelectChat: (chatId: string, modelId: string) => void;
   handleDeleteChatHistory: (chatId: string) => void;
+  handleRenameChat: (chatId: string, currentTitle: string) => void;
   user: UserInfo | null;
   handleSignOut: () => void;
   isLoadingChatList: boolean;
@@ -59,6 +70,7 @@ const SidebarContent = ({
   currentChatId,
   handleSelectChat,
   handleDeleteChatHistory,
+  handleRenameChat,
   user,
   handleSignOut,
   isLoadingChatList,
@@ -175,6 +187,16 @@ const SidebarContent = ({
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
+                                handleRenameChat(chatData.id, chatData.title);
+                              }}
+                              className="flex cursor-pointer items-center gap-2"
+                            >
+                              <Pencil size={16} />
+                              重命名
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleDeleteChatHistory(chatData.id);
                               }}
                               className="flex cursor-pointer items-center gap-2 text-red-600"
@@ -220,6 +242,12 @@ export default function Sidebar() {
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
   const { user } = useUserStore();
+
+  // Rename dialog state
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renamingChatId, setRenamingChatId] = useState<string | null>(null);
+  const [newTitle, setNewTitle] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
 
   // Extract chatId from pathname like /chat/xxx
   const currentChatId = pathname.startsWith("/chat/")
@@ -296,12 +324,80 @@ export default function Sidebar() {
     }
   };
 
+  const handleRenameChat = (chatId: string, currentTitle: string) => {
+    setRenamingChatId(chatId);
+    setNewTitle(currentTitle || "");
+    setRenameDialogOpen(true);
+  };
+
+  const handleConfirmRename = async () => {
+    if (!renamingChatId || !newTitle.trim()) return;
+
+    setIsRenaming(true);
+    try {
+      await updateChatTitle(renamingChatId, newTitle.trim());
+      mutate(); // Refresh the list
+      setRenameDialogOpen(false);
+      setRenamingChatId(null);
+      setNewTitle("");
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
   };
 
   // Check if currently loading (either transitioning or navigating)
   const isLoading = isPending || isNavigating;
+
+  // Rename dialog component
+  const RenameDialog = (
+    <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>重命名对话</DialogTitle>
+          <DialogDescription>请输入新的对话标题</DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <Input
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="请输入标题"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !isRenaming) {
+                handleConfirmRename();
+              }
+            }}
+            autoFocus
+          />
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setRenameDialogOpen(false)}
+            disabled={isRenaming}
+          >
+            取消
+          </Button>
+          <Button
+            onClick={handleConfirmRename}
+            disabled={isRenaming || !newTitle.trim()}
+          >
+            {isRenaming ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                保存中...
+              </>
+            ) : (
+              "确定"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   // Mobile: Show only trigger button and drawer
   if (isMobile) {
@@ -333,32 +429,38 @@ export default function Sidebar() {
               currentChatId={currentChatId}
               handleSelectChat={handleSelectChat}
               handleDeleteChatHistory={handleDeleteChatHistory}
+              handleRenameChat={handleRenameChat}
               user={user}
               handleSignOut={handleSignOut}
               isLoadingChatList={isLoadingChatList}
             />
           </SheetContent>
         </Sheet>
+        {RenameDialog}
       </>
     );
   }
 
   // Desktop: Show regular sidebar
   return (
-    <SidebarContent
-      isSidebarCollapsed={isSidebarCollapsed}
-      toggleSidebar={toggleSidebar}
-      handleCreateChat={handleCreateChat}
-      isLoading={isLoading}
-      navigatingToChatId={navigatingToChatId}
-      chatHistorys={chatHistorys || []}
-      currentChatId={currentChatId}
-      handleSelectChat={handleSelectChat}
-      handleDeleteChatHistory={handleDeleteChatHistory}
-      user={user}
-      handleSignOut={handleSignOut}
-      isLoadingChatList={isLoadingChatList}
-    />
+    <>
+      <SidebarContent
+        isSidebarCollapsed={isSidebarCollapsed}
+        toggleSidebar={toggleSidebar}
+        handleCreateChat={handleCreateChat}
+        isLoading={isLoading}
+        navigatingToChatId={navigatingToChatId}
+        chatHistorys={chatHistorys || []}
+        currentChatId={currentChatId}
+        handleSelectChat={handleSelectChat}
+        handleDeleteChatHistory={handleDeleteChatHistory}
+        handleRenameChat={handleRenameChat}
+        user={user}
+        handleSignOut={handleSignOut}
+        isLoadingChatList={isLoadingChatList}
+      />
+      {RenameDialog}
+    </>
   );
 }
 
