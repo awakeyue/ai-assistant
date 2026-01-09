@@ -19,8 +19,11 @@ import {
   X,
   Image as ImageIcon,
   MessageSquare,
+  UserLock,
 } from "lucide-react";
 import Image from "next/image";
+import { Switch } from "@/components/ui/switch";
+import { useUserStore } from "@/store/user";
 
 interface ModelFormProps {
   model?: UserModelConfig;
@@ -35,6 +38,7 @@ export default function ModelForm({
 }: ModelFormProps) {
   const isEditing = !!model;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isAdmin = useUserStore((state) => state.isAdmin());
 
   const [formData, setFormData] = useState<UserModelFormData>({
     name: "",
@@ -44,6 +48,7 @@ export default function ModelForm({
     description: "",
     logoUrl: "",
     systemPrompt: "",
+    isPublic: false,
   });
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,6 +65,7 @@ export default function ModelForm({
         description: model.description || "",
         logoUrl: model.logoUrl || "",
         systemPrompt: model.systemPrompt || "",
+        isPublic: model.isPublic,
       });
     } else {
       setFormData({
@@ -70,6 +76,7 @@ export default function ModelForm({
         description: "",
         logoUrl: "",
         systemPrompt: "",
+        isPublic: false,
       });
     }
   }, [model]);
@@ -464,6 +471,31 @@ export default function ModelForm({
           className="resize-none transition-colors"
         />
       </div>
+
+      {/* isPublic */}
+      {isAdmin && (
+        <div className="space-y-2">
+          <Label
+            htmlFor="isPublic"
+            className="flex items-center gap-2 text-sm font-medium"
+          >
+            <UserLock className="text-muted-foreground h-4 w-4" />
+            是否公开
+          </Label>
+          <Switch
+            id="isPublic"
+            name="isPublic"
+            checked={formData.isPublic}
+            onCheckedChange={(checked) =>
+              setFormData((prev) => ({ ...prev, isPublic: checked }))
+            }
+            disabled={isSubmitting}
+          />
+          <p className="text-muted-foreground text-xs">
+            如果选择公开，其他用户可以使用此模型，请谨慎打开
+          </p>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex justify-end gap-3 border-t pt-4">

@@ -58,5 +58,5 @@ export async function GET(request: Request) {
   }
 
   // 出现错误，返回到登录页并显示错误
-  return NextResponse.redirect(`${origin}/chat/login?error=auth_error`);
+  return NextResponse.redirect(`${origin}/login?error=auth_error`);
 }

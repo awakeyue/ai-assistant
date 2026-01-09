@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const protectedRoutes = ["/chat", "/settings"];
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -37,8 +39,7 @@ export async function updateSession(request: NextRequest) {
   // 保护 /chat 路由，未登录则重定向到登录页
   if (
     !user &&
-    request.nextUrl.pathname.startsWith("/chat") &&
-    !request.nextUrl.pathname.startsWith("/login")
+    protectedRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

@@ -57,7 +57,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-          redirectTo: `${window.location.origin}/chat/login/callback`,
+          redirectTo: `${window.location.origin}/login/callback`,
         },
       });
 

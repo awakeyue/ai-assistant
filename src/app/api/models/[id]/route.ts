@@ -73,6 +73,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       description?: string | null;
       logoUrl?: string | null;
       systemPrompt?: string | null;
+      isPublic?: boolean;
     } = {};
 
     if (body.name !== undefined) updateData.name = body.name;
@@ -83,6 +84,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (body.logoUrl !== undefined) updateData.logoUrl = body.logoUrl || null;
     if (body.systemPrompt !== undefined)
       updateData.systemPrompt = body.systemPrompt || null;
+    if (body.isPublic !== undefined) updateData.isPublic = body.isPublic;
 
     // Only update API key if a new one is provided (not masked)
     if (body.apiKey && !body.apiKey.includes("****")) {

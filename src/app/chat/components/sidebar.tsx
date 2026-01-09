@@ -5,11 +5,8 @@ import {
   Trash2,
   MoreVertical,
   MessageSquareText,
-  LogOut,
-  User,
   Loader2,
   PanelLeft,
-  Settings2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,10 +15,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useModelStore, useChatStatusStore } from "@/store/chat";
 import { deleteChat, getUserChatList } from "@/actions/chat";
@@ -31,17 +26,10 @@ import useSWR from "swr";
 import { useUIStore } from "@/store/ui-store";
 import { useTransition, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface UserInfo {
-  id: number;
-  name: string | null;
-  email: string;
-  avatarUrl: string | null;
-}
-
-interface SidebarProps {
-  user: UserInfo | null;
-}
+import { User as UserInfo } from "@/types/user";
+import { useUserStore } from "@/store/user";
+import SidebarUserMenu from "./sidebar-user-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Sidebar content component to avoid duplication
 interface SidebarContentProps {
@@ -57,7 +45,7 @@ interface SidebarContentProps {
   handleDeleteChatHistory: (chatId: string) => void;
   user: UserInfo | null;
   handleSignOut: () => void;
-  getInitials: (name: string | null, email: string) => string;
+  isLoadingChatList: boolean;
 }
 
 const SidebarContent = ({
@@ -73,7 +61,7 @@ const SidebarContent = ({
   handleDeleteChatHistory,
   user,
   handleSignOut,
-  getInitials,
+  isLoadingChatList,
 }: SidebarContentProps) => (
   <div
     className={cn(
@@ -139,147 +127,85 @@ const SidebarContent = ({
     {/* Chat History */}
     <div className="flex flex-1 flex-col overflow-hidden">
       {(inSheet || !isSidebarCollapsed) && (
-        <div className="px-4 py-3">
-          <p className="text-sidebar-foreground/70 text-xs font-semibold uppercase">
-            历史对话
-          </p>
-        </div>
-      )}
-      <ScrollArea className="flex-1 overflow-auto">
-        <div
-          className={cn(
-            "space-y-1",
-            isSidebarCollapsed && !inSheet ? "px-2" : "px-2",
-          )}
-        >
-          {chatHistorys?.map((chatData) => {
-            const isLoadingThisChat = navigatingToChatId === chatData.id;
-            const isActive = currentChatId === chatData.id;
-
-            return (
-              <div
-                key={chatData.id}
-                className={cn(
-                  "group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 transition-all",
-                  isActive
-                    ? "bg-sidebar-primary/20 text-sidebar-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent",
-                  isLoadingThisChat && "opacity-70",
-                )}
-                title={chatData.title}
-                onClick={() => handleSelectChat(chatData.id, chatData.modelId)}
-              >
-                {/* Loading indicator for navigating chat */}
-                {isLoadingThisChat && (inSheet || !isSidebarCollapsed) && (
-                  <Loader2 size={14} className="shrink-0 animate-spin" />
-                )}
-                <div
-                  className={cn(
-                    "truncate text-left text-sm",
-                    !inSheet && isSidebarCollapsed ? "hidden" : "w-0 flex-1",
-                  )}
-                >
-                  {chatData.title || "新对话"}
-                </div>
-                {!inSheet && isSidebarCollapsed && (
-                  <div
-                    className="flex w-full items-center justify-center rounded text-sm"
-                    title={chatData.title}
-                  >
-                    {isLoadingThisChat ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <MessageSquareText size={16} />
-                    )}
-                  </div>
-                )}
-                {(inSheet || !isSidebarCollapsed) && !isLoadingThisChat && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="opacity-0 transition-opacity group-hover:opacity-100">
-                        <MoreVertical size={16} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteChatHistory(chatData.id);
-                        }}
-                        className="flex cursor-pointer items-center gap-2 text-red-600"
-                      >
-                        <Trash2 size={16} />
-                        删除
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </ScrollArea>
-    </div>
-
-    {/* Footer */}
-    <div className="border-sidebar-border border-t p-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            className={cn(
-              "hover:bg-sidebar-accent flex w-full items-center gap-3 rounded-lg p-2 transition-colors",
-              !inSheet && isSidebarCollapsed ? "justify-center" : "",
-            )}
-          >
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarImage
-                src={user?.avatarUrl || undefined}
-                alt={user?.name || "用户"}
-              />
-              <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                {user ? getInitials(user.name, user.email) : <User size={16} />}
-              </AvatarFallback>
-            </Avatar>
-            {(inSheet || !isSidebarCollapsed) && (
-              <div className="flex flex-1 flex-col items-start overflow-hidden">
-                <span className="text-sidebar-foreground w-full truncate text-left text-sm font-medium">
-                  {user?.name || "用户"}
-                </span>
-                <span className="text-sidebar-foreground/60 w-full truncate text-left text-xs">
-                  {user?.email}
-                </span>
-              </div>
-            )}
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="top" className="w-56">
-          <div className="px-2 py-1.5">
-            <p className="text-sm font-medium">{user?.name || "用户"}</p>
-            <p className="text-muted-foreground text-xs">{user?.email}</p>
+        <>
+          <div className="px-4 py-3">
+            <p className="text-sidebar-foreground/70 text-xs font-semibold uppercase">
+              更早
+            </p>
           </div>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => (window.location.href = "/settings/models")}
-            className="flex cursor-pointer items-center gap-2"
-          >
-            <Settings2 size={16} />
-            模型管理
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={handleSignOut}
-            className="flex cursor-pointer items-center gap-2 text-red-600 focus:text-red-600"
-          >
-            <LogOut size={16} />
-            退出登录
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <ScrollArea className="flex-1 overflow-auto">
+            {isLoadingChatList ? (
+              <ChatHistorySkeleton />
+            ) : (
+              <div className="space-y-1 px-2">
+                {chatHistorys?.map((chatData) => {
+                  const isLoadingThisChat = navigatingToChatId === chatData.id;
+                  const isActive = currentChatId === chatData.id;
+
+                  return (
+                    <div
+                      key={chatData.id}
+                      className={cn(
+                        "group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 transition-all",
+                        isActive
+                          ? "bg-sidebar-primary/20 text-sidebar-foreground"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent",
+                        isLoadingThisChat && "opacity-70",
+                      )}
+                      title={chatData.title}
+                      onClick={() =>
+                        handleSelectChat(chatData.id, chatData.modelId)
+                      }
+                    >
+                      {/* Loading indicator for navigating chat */}
+                      {isLoadingThisChat && (
+                        <Loader2 size={14} className="shrink-0 animate-spin" />
+                      )}
+                      <div className="w-0 flex-1 truncate text-left text-sm">
+                        {chatData.title || "新对话"}
+                      </div>
+                      {!isLoadingThisChat && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="opacity-0 transition-opacity group-hover:opacity-100">
+                              <MoreVertical size={16} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteChatHistory(chatData.id);
+                              }}
+                              className="flex cursor-pointer items-center gap-2 text-red-600"
+                            >
+                              <Trash2 size={16} />
+                              删除
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
+        </>
+      )}
     </div>
+
+    {/* Footer - User Menu */}
+    <SidebarUserMenu
+      user={user}
+      isSidebarCollapsed={isSidebarCollapsed}
+      inSheet={inSheet}
+      onSignOut={handleSignOut}
+    />
   </div>
 );
 
-export default function Sidebar({ user }: SidebarProps) {
+export default function Sidebar() {
   const {
     isSidebarCollapsed,
     toggleSidebar,
@@ -293,6 +219,7 @@ export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
+  const { user } = useUserStore();
 
   // Extract chatId from pathname like /chat/xxx
   const currentChatId = pathname.startsWith("/chat/")
@@ -308,7 +235,11 @@ export default function Sidebar({ user }: SidebarProps) {
   }, [fetchModels]);
 
   // Use SWR to fetch chat list
-  const { data: chatHistorys, mutate } = useSWR("chat-list", getUserChatList, {
+  const {
+    data: chatHistorys,
+    mutate,
+    isLoading: isLoadingChatList,
+  } = useSWR("chat-list", getUserChatList, {
     fallbackData: [],
     revalidateOnFocus: false,
   });
@@ -338,10 +269,7 @@ export default function Sidebar({ user }: SidebarProps) {
       setMobileSidebarOpen(false);
     }
 
-    // Clear navigating state after a short delay (allow transition to complete)
-    setTimeout(() => {
-      setNavigating(false);
-    }, 100);
+    setNavigating(false);
   };
 
   const handleSelectChat = (chatId: string, modelId: string) => {
@@ -370,13 +298,6 @@ export default function Sidebar({ user }: SidebarProps) {
 
   const handleSignOut = async () => {
     await signOut();
-  };
-
-  const getInitials = (name: string | null, email: string) => {
-    if (name) {
-      return name.charAt(0).toUpperCase();
-    }
-    return email.charAt(0).toUpperCase();
   };
 
   // Check if currently loading (either transitioning or navigating)
@@ -414,7 +335,7 @@ export default function Sidebar({ user }: SidebarProps) {
               handleDeleteChatHistory={handleDeleteChatHistory}
               user={user}
               handleSignOut={handleSignOut}
-              getInitials={getInitials}
+              isLoadingChatList={isLoadingChatList}
             />
           </SheetContent>
         </Sheet>
@@ -436,7 +357,19 @@ export default function Sidebar({ user }: SidebarProps) {
       handleDeleteChatHistory={handleDeleteChatHistory}
       user={user}
       handleSignOut={handleSignOut}
-      getInitials={getInitials}
+      isLoadingChatList={isLoadingChatList}
     />
+  );
+}
+
+function ChatHistorySkeleton() {
+  return (
+    <div className="flex w-full flex-col gap-4 px-2 py-2">
+      <Skeleton className="h-6 w-[70%] rounded-lg" />
+      <Skeleton className="h-6 w-[75%] rounded-lg" />
+      <Skeleton className="h-6 w-[68%] rounded-lg" />
+      <Skeleton className="h-6 w-[70%] rounded-lg" />
+      <Skeleton className="h-6 w-[73%] rounded-lg" />
+    </div>
   );
 }

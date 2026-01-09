@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, Settings2, Sparkles } from "lucide-react";
 import { useModelStore } from "@/store/chat";
+import { useUserStore } from "@/store/user";
 import { UserModelConfig } from "@/types/chat";
 import ModelList from "./components/model-list";
 import ModelForm from "./components/model-form";
@@ -28,6 +29,8 @@ export default function ModelsSettingsPage() {
     setDefaultModel,
   } = useModelStore();
 
+  const user = useUserStore((state) => state.user);
+
   // Fetch models on page load
   useEffect(() => {
     fetchModels();
@@ -39,8 +42,11 @@ export default function ModelsSettingsPage() {
   };
 
   const handleEdit = (model: UserModelConfig) => {
-    setEditingModel(model);
-    setViewMode("edit");
+    // Only allow editing if user owns the model
+    if (user && model.userId === user.id) {
+      setEditingModel(model);
+      setViewMode("edit");
+    }
   };
 
   const handleBack = () => {
@@ -144,6 +150,7 @@ export default function ModelsSettingsPage() {
           <div className="flex-1 overflow-y-auto p-3">
             <ModelList
               models={modelList}
+              currentUserId={user?.id ?? null}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onSetDefault={handleSetDefault}

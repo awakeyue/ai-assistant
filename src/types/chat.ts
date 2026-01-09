@@ -29,6 +29,7 @@ export interface UserModelConfig {
   logoUrl?: string; // Model logo URL from Supabase Storage
   systemPrompt?: string; // System prompt for the model
   isDefault: boolean;
+  isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +43,7 @@ export interface UserModelFormData {
   description?: string;
   logoUrl?: string; // Model logo URL
   systemPrompt?: string; // System prompt
+  isPublic?: boolean;
 }
 
 export interface DbMessage {

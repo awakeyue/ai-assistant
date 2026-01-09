@@ -80,6 +80,7 @@ export const UserScalarFieldEnum = {
   supabaseId: 'supabaseId',
   avatarUrl: 'avatarUrl',
   provider: 'provider',
+  role: 'role',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -122,6 +123,7 @@ export const UserModelScalarFieldEnum = {
   logoUrl: 'logoUrl',
   systemPrompt: 'systemPrompt',
   isDefault: 'isDefault',
+  isPublic: 'isPublic',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

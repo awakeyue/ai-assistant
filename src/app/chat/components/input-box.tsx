@@ -326,12 +326,7 @@ const ModelLogo = memo(function ({
   }
 
   return (
-    <div
-      className={cn(
-        "relative flex-shrink-0 overflow-hidden rounded",
-        sizeClass,
-      )}
-    >
+    <div className={cn("relative shrink-0 overflow-hidden rounded", sizeClass)}>
       <Image
         src={model.logoUrl}
         alt={model.name}

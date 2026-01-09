@@ -17,7 +17,9 @@ export async function GET() {
     }
 
     const models = await prisma.userModel.findMany({
-      where: { userId: user.id },
+      where: {
+        OR: [{ userId: user.id }, { isPublic: true }],
+      },
       orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
     });
 

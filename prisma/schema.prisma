@@ -13,6 +13,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  user
+  admin
+}
+
 model User {
   id            Int      @id @default(autoincrement())
   email         String   @unique
@@ -20,6 +25,7 @@ model User {
   supabaseId    String?  @unique @map("supabase_id") // Supabase Auth 用户ID
   avatarUrl     String?  @map("avatar_url")
   provider      String?  // 登录提供商: email, github
+  role          UserRole @default(user) // user, admin
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -69,6 +75,7 @@ model UserModel {
   logoUrl     String?  @map("logo_url") // Model logo URL from Supabase Storage
   systemPrompt String? @map("system_prompt") @db.Text // System prompt for the model
   isDefault   Boolean  @default(false) @map("is_default") // Default model flag
+  isPublic    Boolean  @default(false) @map("is_public")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

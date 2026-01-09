@@ -20,5 +20,7 @@ export const getCurrentUser = cache(async () => {
     where: { supabaseId: supabaseUser.id },
   });
 
+  console.log("getCurrentUser", user);
+
   return user;
 });
