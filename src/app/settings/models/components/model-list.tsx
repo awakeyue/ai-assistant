@@ -4,7 +4,7 @@ import { UserModelConfig } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2, Star, StarOff, Plus, Bot } from "lucide-react";
+import { Trash2, Star, StarOff, Plus, Bot, Lock } from "lucide-react";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -18,9 +18,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ModelListProps {
   models: UserModelConfig[];
+  currentUserId: number | null;
   onEdit: (model: UserModelConfig) => void;
   onDelete: (id: string) => void;
   onSetDefault: (id: string) => void;
@@ -64,6 +71,7 @@ function ModelListSkeleton() {
 
 export default function ModelList({
   models,
+  currentUserId,
   onEdit,
   onDelete,
   onSetDefault,
@@ -105,6 +113,11 @@ export default function ModelList({
     }
   };
 
+  // Check if user can edit/delete the model
+  const canModifyModel = (model: UserModelConfig) => {
+    return currentUserId !== null && model.userId === currentUserId;
+  };
+
   if (isLoading) {
     return <ModelListSkeleton />;
   }
@@ -128,121 +141,151 @@ export default function ModelList({
   }
 
   return (
-    <div className="space-y-3">
-      {models.map((model) => (
-        <div
-          key={model.id}
-          className={`group bg-card flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all duration-200 hover:shadow-sm ${
-            selectedId === model.id
-              ? "border-primary bg-primary/5 ring-primary/20 ring-1"
-              : "hover:border-muted-foreground/20 hover:bg-accent/30"
-          }`}
-          onClick={() => onEdit(model)}
-        >
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            {/* Model icon */}
+    <TooltipProvider>
+      <div className="space-y-3">
+        {models.map((model) => {
+          const canModify = canModifyModel(model);
+          return (
             <div
-              className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg transition-colors ${
+              key={model.id}
+              className={`group bg-card flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all duration-200 hover:shadow-sm ${
                 selectedId === model.id
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
-              }`}
+                  ? "border-primary bg-primary/5 ring-primary/20 ring-1"
+                  : "hover:border-muted-foreground/20 hover:bg-accent/30"
+              } ${!canModify ? "cursor-default" : ""}`}
+              onClick={() => canModify && onEdit(model)}
             >
-              {model.logoUrl ? (
-                <Image
-                  src={model.logoUrl}
-                  alt={model.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <Bot className="h-5 w-5" />
-              )}
-            </div>
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                {/* Model icon */}
+                <div
+                  className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg transition-colors ${
+                    selectedId === model.id
+                      ? "bg-primary/10 text-primary"
+                      : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+                  }`}
+                >
+                  {model.logoUrl ? (
+                    <Image
+                      src={model.logoUrl}
+                      alt={model.name}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <Bot className="h-5 w-5" />
+                  )}
+                </div>
 
-            {/* Model info */}
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 flex items-center gap-2">
-                <span className="truncate font-medium">{model.name}</span>
-                {model.isDefault && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-amber-100 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                {/* Model info */}
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="truncate font-medium">{model.name}</span>
+                    {model.isDefault && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-amber-100 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      >
+                        默认
+                      </Badge>
+                    )}
+                    {model.isPublic && !canModify && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant="outline"
+                            className="text-muted-foreground gap-1 px-1.5 text-xs"
+                          >
+                            <Lock className="h-3 w-3" />
+                            公共
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>此模型由其他用户共享，无法编辑或删除</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                  <div className="text-muted-foreground truncate font-mono text-sm">
+                    {model.modelId}
+                  </div>
+                  {model.description && (
+                    <div className="text-muted-foreground/80 mt-1 truncate text-xs">
+                      {model.description}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions - Only show for owner */}
+              {canModify && (
+                <div
+                  className="ml-3 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/30"
+                    onClick={() => handleSetDefault(model.id)}
+                    disabled={model.isDefault}
+                    title={model.isDefault ? "当前为默认模型" : "设为默认"}
                   >
-                    默认
-                  </Badge>
-                )}
-              </div>
-              <div className="text-muted-foreground truncate font-mono text-sm">
-                {model.modelId}
-              </div>
-              {model.description && (
-                <div className="text-muted-foreground/80 mt-1 truncate text-xs">
-                  {model.description}
+                    {model.isDefault ? (
+                      <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                    ) : (
+                      <StarOff className="h-4 w-4" />
+                    )}
+                  </Button>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-destructive/10 hover:text-destructive h-8 w-8"
+                        title="删除"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>确认删除</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {`确定要删除模型 "${model.name}" 吗？此操作无法撤销。`}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(model.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          删除
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              )}
+
+              {/* Always visible star for default model (only for owner) */}
+              {model.isDefault && canModify && (
+                <div className="ml-3 group-hover:hidden">
+                  <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                </div>
+              )}
+
+              {/* Lock icon for non-owner public models */}
+              {!canModify && (
+                <div className="text-muted-foreground/50 ml-3">
+                  <Lock className="h-4 w-4" />
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Actions */}
-          <div
-            className="ml-3 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/30"
-              onClick={() => handleSetDefault(model.id)}
-              disabled={model.isDefault}
-              title={model.isDefault ? "当前为默认模型" : "设为默认"}
-            >
-              {model.isDefault ? (
-                <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-              ) : (
-                <StarOff className="h-4 w-4" />
-              )}
-            </Button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-destructive/10 hover:text-destructive h-8 w-8"
-                  title="删除"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>确认删除</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {`确定要删除模型 "${model.name}" 吗？此操作无法撤销。`}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>取消</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => handleDelete(model.id)}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    删除
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-
-          {/* Always visible star for default model */}
-          {model.isDefault && (
-            <div className="ml-3 group-hover:hidden">
-              <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
+          );
+        })}
+      </div>
+    </TooltipProvider>
   );
 }

@@ -1,16 +1,21 @@
 "use client";
 
-import { LogOut, User, Settings2 } from "lucide-react";
+import { LogOut, User, Settings2, Sun, Moon, Monitor } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { User as UserInfo } from "@/types/user";
+import { useTheme } from "next-themes";
 
 interface SidebarUserMenuProps {
   user: UserInfo | null;
@@ -35,6 +40,8 @@ export default function SidebarUserMenu({
   inSheet = false,
   onSignOut,
 }: SidebarUserMenuProps) {
+  const { theme, setTheme } = useTheme();
+
   return (
     <div className="border-sidebar-border border-t p-2">
       <DropdownMenu>
@@ -56,9 +63,19 @@ export default function SidebarUserMenu({
             </Avatar>
             {(inSheet || !isSidebarCollapsed) && (
               <div className="flex flex-1 flex-col items-start overflow-hidden">
-                <span className="text-sidebar-foreground w-full truncate text-left text-sm font-medium">
-                  {user?.name || "用户"}
-                </span>
+                <div className="flex w-full items-center gap-2">
+                  <span className="text-sidebar-foreground truncate text-left text-sm font-medium">
+                    {user?.name || "用户"}
+                  </span>
+                  {user?.role === "admin" && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-primary shrink-0 px-1.5 py-0 text-[10px]"
+                    >
+                      管理员
+                    </Badge>
+                  )}
+                </div>
                 <span className="text-sidebar-foreground/60 w-full truncate text-left text-xs">
                   {user?.email}
                 </span>
@@ -68,7 +85,17 @@ export default function SidebarUserMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="top" className="w-56">
           <div className="px-2 py-1.5">
-            <p className="text-sm font-medium">{user?.name || "用户"}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium">{user?.name || "用户"}</p>
+              {user?.role === "admin" && (
+                <Badge
+                  variant="secondary"
+                  className="bg-primary/10 text-primary px-1.5 py-0 text-[10px]"
+                >
+                  管理员
+                </Badge>
+              )}
+            </div>
             <p className="text-muted-foreground text-xs">{user?.email}</p>
           </div>
           <DropdownMenuSeparator />
@@ -79,6 +106,50 @@ export default function SidebarUserMenu({
             <Settings2 size={16} />
             模型管理
           </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="flex cursor-pointer items-center gap-2">
+              {theme === "dark" ? (
+                <Moon size={16} />
+              ) : theme === "light" ? (
+                <Sun size={16} />
+              ) : (
+                <Monitor size={16} />
+              )}
+              主题
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem
+                onClick={() => setTheme("light")}
+                className="flex cursor-pointer items-center gap-2"
+              >
+                <Sun size={16} />
+                浅色
+                {theme === "light" && (
+                  <span className="text-primary ml-auto">✓</span>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setTheme("dark")}
+                className="flex cursor-pointer items-center gap-2"
+              >
+                <Moon size={16} />
+                深色
+                {theme === "dark" && (
+                  <span className="text-primary ml-auto">✓</span>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setTheme("system")}
+                className="flex cursor-pointer items-center gap-2"
+              >
+                <Monitor size={16} />
+                跟随系统
+                {theme === "system" && (
+                  <span className="text-primary ml-auto">✓</span>
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={onSignOut}

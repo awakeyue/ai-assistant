@@ -3,7 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { ChatStatus } from "ai";
 import { ArrowUp, CircleStop, Plus, X, Settings } from "lucide-react";
-import { useRef, useState, useCallback, memo, useEffect } from "react";
+import {
+  useRef,
+  useState,
+  useCallback,
+  memo,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 import Image from "next/image";
 import {
   Tooltip,
@@ -43,6 +50,13 @@ export default function InputBox({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Use useSyncExternalStore to safely detect client-side mounting (avoids hydration mismatch)
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   const { currentModelId, modelList, setCurrentModelId, isLoading } =
     useModelStore();
@@ -200,11 +214,14 @@ export default function InputBox({
                   variant="ghost"
                   className="max-w-30 gap-1.5 outline-none"
                 >
-                  {!isLoading && modelList.length > 0 && currentModel && (
-                    <ModelLogo model={currentModel} size="sm" />
-                  )}
+                  {mounted &&
+                    !isLoading &&
+                    modelList.length > 0 &&
+                    currentModel && (
+                      <ModelLogo model={currentModel} size="sm" />
+                    )}
                   <span className="truncate text-xs">
-                    {isLoading
+                    {!mounted || isLoading
                       ? "加载中..."
                       : modelList.length === 0
                         ? "请配置模型"
@@ -261,7 +278,7 @@ export default function InputBox({
               onClick={handleSend}
               disabled={disabled || (!input.trim() && files.length === 0)}
               size="sm"
-              className="disabled:bg-white-400 rounded-lg px-3 py-2 disabled:text-white"
+              className="disabled:bg-white-400 dark:bg-black-400 rounded-lg px-3 py-2 disabled:text-white"
             >
               <ArrowUp size={20} />
             </Button>

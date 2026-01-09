@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import UserInitializer from "@/components/custom/user-initializer";
 import { getCurrentUser } from "@/lib/auth";
+import { ThemeProvider } from "next-themes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,13 +28,20 @@ export default async function RootLayout({
 }>) {
   const user = await getCurrentUser();
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <Toaster position="top-center" />
-        <UserInitializer user={user} />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster position="top-center" />
+          <UserInitializer user={user} />
+        </ThemeProvider>
       </body>
     </html>
   );

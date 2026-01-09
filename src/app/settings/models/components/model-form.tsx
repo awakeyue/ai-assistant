@@ -364,6 +364,7 @@ export default function ModelForm({
           onChange={handleChange}
           placeholder="例如: https://api.openai.com/v1"
           disabled={isSubmitting}
+          autoComplete="off"
           className={`h-10 font-mono text-sm transition-colors ${errors.baseURL ? "border-destructive focus-visible:ring-destructive" : ""}`}
         />
         {errors.baseURL && (
@@ -392,6 +393,7 @@ export default function ModelForm({
             onChange={handleChange}
             placeholder={isEditing ? "留空保持原密钥不变" : "请输入 API 密钥"}
             disabled={isSubmitting}
+            autoComplete="new-password"
             className={`h-10 pr-10 font-mono text-sm transition-colors ${errors.apiKey ? "border-destructive focus-visible:ring-destructive" : ""}`}
           />
           <Button

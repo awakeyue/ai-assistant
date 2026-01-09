@@ -21,6 +21,7 @@ export interface ModelInfo {
 // User model configuration from database
 export interface UserModelConfig {
   id: string;
+  userId: number; // Model creator user ID
   name: string;
   modelId: string;
   baseURL: string;
