@@ -12,7 +12,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Github, Mail, Loader2 } from "lucide-react";
+import {
+  Github,
+  Mail,
+  Loader2,
+  CheckCircle2,
+  MailOpen,
+  RefreshCw,
+} from "lucide-react";
 import { signUpWithEmail, signInWithEmail } from "@/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -21,6 +28,9 @@ export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
   const router = useRouter();
 
   const handleEmailSubmit = async (formData: FormData) => {
@@ -31,16 +41,17 @@ export default function LoginPage() {
         if (result?.error) {
           toast.error(result.error);
         } else if (result?.success) {
-          // 登录成功，客户端重定向
+          // Login success, redirect on client side
           router.push("/chat");
         }
       } else {
+        const email = formData.get("email") as string;
         const result = await signUpWithEmail(formData);
         if (result?.error) {
           toast.error(result.error);
         } else if (result?.success) {
-          toast.success("注册成功！请查收验证邮件");
-          setIsLogin(true);
+          // Show detailed guidance after successful registration
+          setRegisteredEmail(email);
         }
       }
     } catch (error: any) {
@@ -48,6 +59,45 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResendEmail = async () => {
+    if (!registeredEmail || resendCountdown > 0) return;
+
+    setResendLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: registeredEmail,
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("验证邮件已重新发送");
+        // Start countdown, 60 seconds before allowing resend
+        setResendCountdown(60);
+        const timer = setInterval(() => {
+          setResendCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "发送失败");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setRegisteredEmail(null);
+    setIsLogin(true);
   };
 
   const handleGithubLogin = async () => {
@@ -71,8 +121,101 @@ export default function LoginPage() {
     }
   };
 
+  // Registration success guidance page
+  if (registeredEmail) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 p-4 dark:from-gray-900 dark:to-gray-800">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
+            <CardTitle className="text-2xl">注册成功！</CardTitle>
+            <CardDescription className="text-base">
+              我们已向您的邮箱发送了验证邮件
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Email info */}
+            <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50">
+              <div className="flex items-center gap-3">
+                <MailOpen className="h-5 w-5 text-gray-500" />
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    验证邮件已发送至
+                  </p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {registeredEmail}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Steps guidance */}
+            <div className="space-y-3">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                接下来请：
+              </h4>
+              <ol className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <li className="flex items-start gap-2">
+                  <span className="bg-primary/10 text-primary flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-medium">
+                    1
+                  </span>
+                  <span>打开您的邮箱，查找来自我们的验证邮件</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-primary/10 text-primary flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-medium">
+                    2
+                  </span>
+                  <span>点击邮件中的验证链接完成账户激活</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-primary/10 text-primary flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-medium">
+                    3
+                  </span>
+                  <span>验证成功后返回登录页面登录</span>
+                </li>
+              </ol>
+            </div>
+
+            {/* Tips */}
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                💡 <strong>提示：</strong>
+                如果没有收到邮件，请检查垃圾邮件文件夹，或点击下方按钮重新发送。
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleResendEmail}
+                disabled={resendLoading || resendCountdown > 0}
+              >
+                {resendLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                {resendCountdown > 0
+                  ? `${resendCountdown}秒后可重新发送`
+                  : "重新发送验证邮件"}
+              </Button>
+              <Button className="w-full" onClick={handleBackToLogin}>
+                <Mail className="mr-2 h-4 w-4" />
+                返回登录
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 p-4 dark:from-gray-900 dark:to-gray-800">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="bg-primary text-primary-foreground mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl text-xl font-bold">
@@ -86,7 +229,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* GitHub 登录按钮 */}
+          {/* GitHub login button */}
           <Button
             variant="outline"
             className="w-full"
@@ -98,7 +241,7 @@ export default function LoginPage() {
             ) : (
               <Github className="mr-2 h-4 w-4" />
             )}
-            使用 GitHub 登录
+            {oauthLoading ? "正在跳转..." : "使用 GitHub 登录"}
           </Button>
 
           <div className="relative">
@@ -112,7 +255,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* 邮箱登录/注册表单 */}
+          {/* Email login/register form */}
           <form action={handleEmailSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
@@ -148,11 +291,16 @@ export default function LoginPage() {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isLogin ? "登录中..." : "注册中..."}
+                </>
               ) : (
-                <Mail className="mr-2 h-4 w-4" />
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  {isLogin ? "登录" : "注册"}
+                </>
               )}
-              {isLogin ? "登录" : "注册"}
             </Button>
           </form>
 

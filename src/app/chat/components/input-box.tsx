@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ChatStatus } from "ai";
-import { ArrowUp, CircleStop, Plus, X, Settings } from "lucide-react";
+import { ArrowUp, CircleStop, Plus, X } from "lucide-react";
 import {
   useRef,
   useState,
@@ -21,7 +21,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useModelStore } from "@/store/chat";
@@ -254,14 +253,6 @@ export default function InputBox({
                         <span className="text-sm">{model.name}</span>
                       </DropdownMenuItem>
                     ))}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onSelect={() => router.push("/settings/models")}
-                      className="text-muted-foreground"
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      管理模型
-                    </DropdownMenuItem>
                   </>
                 )}
               </DropdownMenuContent>
