@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
   // Fetch model configuration from database
   const modelConfig = await prisma.userModel.findFirst({
-    where: { id: modelId, userId: user.id },
+    where: { id: modelId, OR: [{ userId: user.id }, { isPublic: true }] },
   });
 
   if (!modelConfig) {
