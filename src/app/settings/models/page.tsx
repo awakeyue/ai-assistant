@@ -3,12 +3,20 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Settings2, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Settings2,
+  Sparkles,
+  ChevronLeft,
+} from "lucide-react";
 import { useModelStore } from "@/store/chat";
 import { useUserStore } from "@/store/user";
 import { UserModelConfig } from "@/types/chat";
 import ModelList from "./components/model-list";
 import ModelForm from "./components/model-form";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 type ViewMode = "list" | "add" | "edit";
 
@@ -18,6 +26,7 @@ export default function ModelsSettingsPage() {
   const [editingModel, setEditingModel] = useState<UserModelConfig | null>(
     null,
   );
+  const isMobile = useIsMobile();
 
   const {
     modelList,
@@ -99,8 +108,12 @@ export default function ModelsSettingsPage() {
     }
   };
 
+  // Check if we should show the form panel (mobile: only when in add/edit mode)
+  const showFormPanel = isMobile ? viewMode !== "list" : true;
+  const showListPanel = isMobile ? viewMode === "list" : true;
+
   return (
-    <div className="bg-background flex h-screen flex-col">
+    <div className="bg-background flex h-full flex-col overflow-hidden">
       {/* Header */}
       <header className="bg-background/95 supports-backdrop-filter:bg-background/60 flex h-14 shrink-0 items-center justify-between border-b px-4 backdrop-blur">
         <div className="flex items-center gap-3">
@@ -127,80 +140,105 @@ export default function ModelsSettingsPage() {
         </div>
       </header>
 
-      {/* Main Content - Two Column Layout */}
-      <main className="flex min-h-0 flex-1">
+      {/* Main Content - Responsive Layout */}
+      <main className="flex min-h-0 flex-1 overflow-hidden">
         {/* Left Panel - Model List */}
-        <div className="bg-muted/20 flex w-80 flex-col border-r lg:w-96">
-          <div className="bg-background/50 flex h-14 items-center justify-between border-b px-4">
-            <div>
-              <h2 className="text-sm font-medium">模型列表</h2>
-              <p className="text-muted-foreground text-xs">
-                {isLoading ? "加载中..." : `共 ${modelList.length} 个模型`}
-              </p>
+        {showListPanel && (
+          <div
+            className={cn(
+              "bg-muted/20 flex flex-col border-r",
+              isMobile ? "w-full border-r-0" : "w-80 lg:w-96",
+            )}
+          >
+            <div className="bg-background/50 flex h-14 shrink-0 items-center justify-between border-b px-4">
+              <div>
+                <h2 className="text-sm font-medium">模型列表</h2>
+                <p className="text-muted-foreground text-xs">
+                  {isLoading ? "加载中..." : `共 ${modelList.length} 个模型`}
+                </p>
+              </div>
+              <Button
+                onClick={handleAdd}
+                size="sm"
+                className="h-8 gap-1 text-xs shadow-sm"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                添加
+              </Button>
             </div>
-            <Button
-              onClick={handleAdd}
-              size="sm"
-              className="h-8 gap-1 text-xs shadow-sm"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              添加
-            </Button>
+            <div className="flex-1 overflow-y-auto p-3">
+              <ModelList
+                models={modelList}
+                currentUserId={user?.id ?? null}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onSetDefault={handleSetDefault}
+                onAdd={handleAdd}
+                isLoading={isLoading}
+                selectedId={editingModel?.id}
+              />
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-3">
-            <ModelList
-              models={modelList}
-              currentUserId={user?.id ?? null}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onSetDefault={handleSetDefault}
-              onAdd={handleAdd}
-              isLoading={isLoading}
-              selectedId={editingModel?.id}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Right Panel - Form */}
-        <div className="bg-background flex flex-1 flex-col">
-          <div className="bg-background/50 flex h-14 items-center border-b px-6">
-            <div>
-              <h2 className="text-sm font-medium">{getFormTitle()}</h2>
-              {getFormSubtitle() && (
-                <p className="text-muted-foreground text-xs">
-                  {getFormSubtitle()}
-                </p>
+        {showFormPanel && (
+          <div
+            className={cn(
+              "bg-background flex flex-col overflow-hidden",
+              isMobile ? "w-full" : "flex-1",
+            )}
+          >
+            <div className="bg-background/50 flex h-14 shrink-0 items-center gap-3 border-b px-4">
+              {/* Mobile back button */}
+              {isMobile && viewMode !== "list" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBack}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+              )}
+              <div>
+                <h2 className="text-sm font-medium">{getFormTitle()}</h2>
+                {getFormSubtitle() && (
+                  <p className="text-muted-foreground text-xs">
+                    {getFormSubtitle()}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              {viewMode === "list" ? (
+                <div className="flex h-full flex-col items-center justify-center text-center">
+                  <div className="relative mb-6">
+                    <div className="from-primary/20 absolute inset-0 rounded-full bg-linear-to-br to-transparent blur-2xl" />
+                    <div className="from-muted to-muted/50 relative flex h-20 w-20 items-center justify-center rounded-full border bg-linear-to-br">
+                      <Settings2 className="text-muted-foreground/50 h-10 w-10" />
+                    </div>
+                  </div>
+                  <h3 className="mb-2 text-lg font-medium">选择一个模型</h3>
+                  <p className="text-muted-foreground mb-1 max-w-xs text-sm">
+                    从左侧列表选择一个模型进行查看或编辑
+                  </p>
+                  <p className="text-muted-foreground/70 text-xs">
+                    或点击&ldquo;添加&rdquo;按钮创建新的模型配置
+                  </p>
+                </div>
+              ) : (
+                <div className="mx-auto max-w-xl">
+                  <ModelForm
+                    model={editingModel || undefined}
+                    onSuccess={handleFormSuccess}
+                    onCancel={handleBack}
+                  />
+                </div>
               )}
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            {viewMode === "list" ? (
-              <div className="flex h-full flex-col items-center justify-center text-center">
-                <div className="relative mb-6">
-                  <div className="from-primary/20 absolute inset-0 rounded-full bg-linear-to-br to-transparent blur-2xl" />
-                  <div className="from-muted to-muted/50 relative flex h-20 w-20 items-center justify-center rounded-full border bg-linear-to-br">
-                    <Settings2 className="text-muted-foreground/50 h-10 w-10" />
-                  </div>
-                </div>
-                <h3 className="mb-2 text-lg font-medium">选择一个模型</h3>
-                <p className="text-muted-foreground mb-1 max-w-xs text-sm">
-                  从左侧列表选择一个模型进行查看或编辑
-                </p>
-                <p className="text-muted-foreground/70 text-xs">
-                  或点击&ldquo;添加&rdquo;按钮创建新的模型配置
-                </p>
-              </div>
-            ) : (
-              <div className="mx-auto max-w-xl">
-                <ModelForm
-                  model={editingModel || undefined}
-                  onSuccess={handleFormSuccess}
-                  onCancel={handleBack}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );

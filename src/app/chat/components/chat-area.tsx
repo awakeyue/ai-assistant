@@ -233,8 +233,8 @@ export default function ChatArea({
   // Show loading skeleton when navigating to another chat
   if (isInitialLoading) {
     return (
-      <div className="relative mx-auto flex h-full max-w-5xl flex-1 flex-col p-2 pt-4">
-        <div className="flex-1 overflow-hidden">
+      <div className="relative mx-auto flex h-full w-full max-w-5xl flex-1 flex-col overflow-hidden p-2 pt-4">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <MessageSkeleton />
         </div>
         <InputBox
@@ -249,12 +249,12 @@ export default function ChatArea({
   }
 
   return (
-    <div className="relative mx-auto flex h-full max-w-5xl flex-1 flex-col p-2 pt-4">
+    <div className="relative mx-auto flex h-full w-full max-w-5xl flex-1 flex-col overflow-hidden p-2 pt-4">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
         onWheel={handleWheel}
-        className="scrollbar-hide flex-1 overflow-y-auto"
+        className="scrollbar-hide min-h-0 flex-1 overflow-y-auto"
       >
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
