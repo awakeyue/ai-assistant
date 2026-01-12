@@ -124,6 +124,7 @@ export const UserModelScalarFieldEnum = {
   systemPrompt: 'systemPrompt',
   isDefault: 'isDefault',
   isPublic: 'isPublic',
+  supportsVision: 'supportsVision',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

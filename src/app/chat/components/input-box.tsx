@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ChatStatus } from "ai";
-import { ArrowUp, CircleStop, Plus, X } from "lucide-react";
+import { ArrowUp, CircleStop, X } from "lucide-react";
 import {
   useRef,
   useState,
@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { UserModelConfig } from "@/types/chat";
+import InputAttachments, { AttachmentType } from "./input-attachments";
 
 interface InputBoxProps {
   onSubmit: (text: string, attachments: File[]) => void;
@@ -47,7 +48,6 @@ export default function InputBox({
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Use useSyncExternalStore to safely detect client-side mounting (avoids hydration mismatch)
@@ -65,6 +65,9 @@ export default function InputBox({
 
   const disabled = status !== "ready" || externalDisabled;
 
+  // Check if model supports vision for drag/paste
+  const supportsVision = currentModel?.supportsVision ?? false;
+
   useEffect(() => {
     if (inputRef.current) {
       requestAnimationFrame(() => {
@@ -73,36 +76,51 @@ export default function InputBox({
     }
   }, [currentChatId]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const items = e.clipboardData.items;
-    const pastedFiles: File[] = [];
-
-    for (const item of items) {
-      if (item.type.indexOf("image") === 0) {
-        const file = item.getAsFile();
-        if (file) pastedFiles.push(file);
-        e.preventDefault();
+  // Handle files selected from InputAttachments component
+  const handleFilesSelect = useCallback(
+    (selectedFiles: File[], type: AttachmentType) => {
+      if (type === "image") {
+        setFiles((prev) => [...prev, ...selectedFiles]);
       }
-    }
+      // Future: handle other file types
+    },
+    [],
+  );
 
-    if (pastedFiles.length > 0) {
-      setFiles((prev) => [...prev, ...pastedFiles]);
-    }
-  };
+  // Handle paste - only allow images if model supports vision
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      if (!supportsVision) return;
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.dataTransfer.types.includes("Files")) {
-      setIsDragging(true);
-    }
-  }, []);
+      const items = e.clipboardData.items;
+      const pastedFiles: File[] = [];
+
+      for (const item of items) {
+        if (item.type.indexOf("image") === 0) {
+          const file = item.getAsFile();
+          if (file) pastedFiles.push(file);
+          e.preventDefault();
+        }
+      }
+
+      if (pastedFiles.length > 0) {
+        setFiles((prev) => [...prev, ...pastedFiles]);
+      }
+    },
+    [supportsVision],
+  );
+
+  // Handle drag over - only allow if model supports vision
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (supportsVision && e.dataTransfer.types.includes("Files")) {
+        setIsDragging(true);
+      }
+    },
+    [supportsVision],
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -110,22 +128,31 @@ export default function InputBox({
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+  // Handle drop - only allow images if model supports vision
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
 
-    const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.startsWith("image/"),
-    );
-    if (droppedFiles.length < e.dataTransfer.files.length) {
-      toast.warning("仅支持接收图片文件");
-    }
+      if (!supportsVision) {
+        toast.warning("当前模型不支持图片上传");
+        return;
+      }
 
-    if (droppedFiles.length > 0) {
-      setFiles((prev) => [...prev, ...droppedFiles]);
-    }
-  }, []);
+      const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
+        file.type.startsWith("image/"),
+      );
+      if (droppedFiles.length < e.dataTransfer.files.length) {
+        toast.warning("仅支持接收图片文件");
+      }
+
+      if (droppedFiles.length > 0) {
+        setFiles((prev) => [...prev, ...droppedFiles]);
+      }
+    },
+    [supportsVision],
+  );
 
   const removeFile = useCallback((indexToRemove: number) => {
     setFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
@@ -185,26 +212,8 @@ export default function InputBox({
           )}
         />
 
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileSelect}
-          className="hidden"
-          accept="image/*"
-          multiple
-        />
-
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Button
-              title="请上传图片，支持拖拽粘贴"
-              size="sm"
-              variant={"ghost"}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Plus className="opacity-80" />
-            </Button>
-
+          <div className="flex items-center gap-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -257,6 +266,11 @@ export default function InputBox({
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+            <InputAttachments
+              currentModel={currentModel}
+              onFilesSelect={handleFilesSelect}
+              disabled={externalDisabled}
+            />
           </div>
 
           {status === "streaming" ? (

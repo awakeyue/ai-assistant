@@ -46,6 +46,7 @@ export type UserModelMinAggregateOutputType = {
   systemPrompt: string | null
   isDefault: boolean | null
   isPublic: boolean | null
+  supportsVision: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +63,7 @@ export type UserModelMaxAggregateOutputType = {
   systemPrompt: string | null
   isDefault: boolean | null
   isPublic: boolean | null
+  supportsVision: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -78,6 +80,7 @@ export type UserModelCountAggregateOutputType = {
   systemPrompt: number
   isDefault: number
   isPublic: number
+  supportsVision: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -104,6 +107,7 @@ export type UserModelMinAggregateInputType = {
   systemPrompt?: true
   isDefault?: true
   isPublic?: true
+  supportsVision?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -120,6 +124,7 @@ export type UserModelMaxAggregateInputType = {
   systemPrompt?: true
   isDefault?: true
   isPublic?: true
+  supportsVision?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -136,6 +141,7 @@ export type UserModelCountAggregateInputType = {
   systemPrompt?: true
   isDefault?: true
   isPublic?: true
+  supportsVision?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -239,6 +245,7 @@ export type UserModelGroupByOutputType = {
   systemPrompt: string | null
   isDefault: boolean
   isPublic: boolean
+  supportsVision: boolean
   createdAt: Date
   updatedAt: Date
   _count: UserModelCountAggregateOutputType | null
@@ -278,6 +285,7 @@ export type UserModelWhereInput = {
   systemPrompt?: Prisma.StringNullableFilter<"UserModel"> | string | null
   isDefault?: Prisma.BoolFilter<"UserModel"> | boolean
   isPublic?: Prisma.BoolFilter<"UserModel"> | boolean
+  supportsVision?: Prisma.BoolFilter<"UserModel"> | boolean
   createdAt?: Prisma.DateTimeFilter<"UserModel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserModel"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -295,6 +303,7 @@ export type UserModelOrderByWithRelationInput = {
   systemPrompt?: Prisma.SortOrderInput | Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  supportsVision?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -315,6 +324,7 @@ export type UserModelWhereUniqueInput = Prisma.AtLeast<{
   systemPrompt?: Prisma.StringNullableFilter<"UserModel"> | string | null
   isDefault?: Prisma.BoolFilter<"UserModel"> | boolean
   isPublic?: Prisma.BoolFilter<"UserModel"> | boolean
+  supportsVision?: Prisma.BoolFilter<"UserModel"> | boolean
   createdAt?: Prisma.DateTimeFilter<"UserModel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserModel"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -332,6 +342,7 @@ export type UserModelOrderByWithAggregationInput = {
   systemPrompt?: Prisma.SortOrderInput | Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  supportsVision?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserModelCountOrderByAggregateInput
@@ -356,6 +367,7 @@ export type UserModelScalarWhereWithAggregatesInput = {
   systemPrompt?: Prisma.StringNullableWithAggregatesFilter<"UserModel"> | string | null
   isDefault?: Prisma.BoolWithAggregatesFilter<"UserModel"> | boolean
   isPublic?: Prisma.BoolWithAggregatesFilter<"UserModel"> | boolean
+  supportsVision?: Prisma.BoolWithAggregatesFilter<"UserModel"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserModel"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"UserModel"> | Date | string
 }
@@ -371,6 +383,7 @@ export type UserModelCreateInput = {
   systemPrompt?: string | null
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutUserModelsInput
@@ -388,6 +401,7 @@ export type UserModelUncheckedCreateInput = {
   systemPrompt?: string | null
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -403,6 +417,7 @@ export type UserModelUpdateInput = {
   systemPrompt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  supportsVision?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutUserModelsNestedInput
@@ -420,6 +435,7 @@ export type UserModelUncheckedUpdateInput = {
   systemPrompt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  supportsVision?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -436,6 +452,7 @@ export type UserModelCreateManyInput = {
   systemPrompt?: string | null
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -451,6 +468,7 @@ export type UserModelUpdateManyMutationInput = {
   systemPrompt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  supportsVision?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -467,6 +485,7 @@ export type UserModelUncheckedUpdateManyInput = {
   systemPrompt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  supportsVision?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -493,6 +512,7 @@ export type UserModelCountOrderByAggregateInput = {
   systemPrompt?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  supportsVision?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -513,6 +533,7 @@ export type UserModelMaxOrderByAggregateInput = {
   systemPrompt?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  supportsVision?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -529,6 +550,7 @@ export type UserModelMinOrderByAggregateInput = {
   systemPrompt?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   isPublic?: Prisma.SortOrder
+  supportsVision?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -594,6 +616,7 @@ export type UserModelCreateWithoutUserInput = {
   systemPrompt?: string | null
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -609,6 +632,7 @@ export type UserModelUncheckedCreateWithoutUserInput = {
   systemPrompt?: string | null
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -654,6 +678,7 @@ export type UserModelScalarWhereInput = {
   systemPrompt?: Prisma.StringNullableFilter<"UserModel"> | string | null
   isDefault?: Prisma.BoolFilter<"UserModel"> | boolean
   isPublic?: Prisma.BoolFilter<"UserModel"> | boolean
+  supportsVision?: Prisma.BoolFilter<"UserModel"> | boolean
   createdAt?: Prisma.DateTimeFilter<"UserModel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserModel"> | Date | string
 }
@@ -669,6 +694,7 @@ export type UserModelCreateManyUserInput = {
   systemPrompt?: string | null
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -684,6 +710,7 @@ export type UserModelUpdateWithoutUserInput = {
   systemPrompt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  supportsVision?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -699,6 +726,7 @@ export type UserModelUncheckedUpdateWithoutUserInput = {
   systemPrompt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  supportsVision?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -714,6 +742,7 @@ export type UserModelUncheckedUpdateManyWithoutUserInput = {
   systemPrompt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPublic?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  supportsVision?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -732,6 +761,7 @@ export type UserModelSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   systemPrompt?: boolean
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -749,6 +779,7 @@ export type UserModelSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   systemPrompt?: boolean
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -766,6 +797,7 @@ export type UserModelSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   systemPrompt?: boolean
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -783,11 +815,12 @@ export type UserModelSelectScalar = {
   systemPrompt?: boolean
   isDefault?: boolean
   isPublic?: boolean
+  supportsVision?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserModelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "modelId" | "baseURL" | "apiKey" | "description" | "logoUrl" | "systemPrompt" | "isDefault" | "isPublic" | "createdAt" | "updatedAt", ExtArgs["result"]["userModel"]>
+export type UserModelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "modelId" | "baseURL" | "apiKey" | "description" | "logoUrl" | "systemPrompt" | "isDefault" | "isPublic" | "supportsVision" | "createdAt" | "updatedAt", ExtArgs["result"]["userModel"]>
 export type UserModelInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -815,6 +848,7 @@ export type $UserModelPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     systemPrompt: string | null
     isDefault: boolean
     isPublic: boolean
+    supportsVision: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["userModel"]>
@@ -1252,6 +1286,7 @@ export interface UserModelFieldRefs {
   readonly systemPrompt: Prisma.FieldRef<"UserModel", 'String'>
   readonly isDefault: Prisma.FieldRef<"UserModel", 'Boolean'>
   readonly isPublic: Prisma.FieldRef<"UserModel", 'Boolean'>
+  readonly supportsVision: Prisma.FieldRef<"UserModel", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"UserModel", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"UserModel", 'DateTime'>
 }

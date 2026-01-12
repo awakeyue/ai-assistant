@@ -6,6 +6,7 @@ import ChatMessage from "./chat-message";
 import EmptyState from "./empty-state";
 import InputBox from "./input-box";
 import { useModelStore, useChatStatusStore } from "@/store/chat";
+import { useChatCapabilitiesStore } from "@/store/chat-capabilities";
 import { DefaultChatTransport } from "ai";
 import { AlertCircleIcon, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -203,13 +204,19 @@ export default function ChatArea({
 
     const fileUIParts = await Promise.all(attachments.map(convertFileToUIPart));
 
+    // Get current capabilities state
+    const capabilities = useChatCapabilitiesStore.getState().getCapabilities();
+
     sendMessage(
       {
         text: inputValue,
         files: fileUIParts,
       },
       {
-        body: { modelId: currentModelId },
+        body: {
+          modelId: currentModelId,
+          capabilities,
+        },
       },
     );
 

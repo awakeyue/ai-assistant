@@ -76,6 +76,10 @@ model UserModel {
   systemPrompt String? @map("system_prompt") @db.Text // System prompt for the model
   isDefault   Boolean  @default(false) @map("is_default") // Default model flag
   isPublic    Boolean  @default(false) @map("is_public")
+  
+  // Model Capabilities - 模型能力开关
+  supportsVision        Boolean @default(false) @map("supports_vision") // Vision model support (image input)
+  
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

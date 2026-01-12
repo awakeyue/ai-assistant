@@ -31,6 +31,10 @@ export interface UserModelConfig {
   systemPrompt?: string; // System prompt for the model
   isDefault: boolean;
   isPublic: boolean;
+
+  // Model Capabilities - 模型能力开关
+  supportsVision: boolean; // Vision model support (image input)
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,6 +49,14 @@ export interface UserModelFormData {
   logoUrl?: string; // Model logo URL
   systemPrompt?: string; // System prompt
   isPublic?: boolean;
+
+  // Model Capabilities
+  supportsVision?: boolean;
+}
+
+// Chat capabilities configuration for runtime
+export interface ChatCapabilities {
+  enableVision: boolean;
 }
 
 export interface DbMessage {

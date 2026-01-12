@@ -88,6 +88,7 @@ export async function POST(req: NextRequest) {
         logoUrl: body.logoUrl || null,
         systemPrompt: body.systemPrompt || null,
         isDefault: isFirstModel,
+        supportsVision: body.supportsVision ?? false,
       },
     });
 

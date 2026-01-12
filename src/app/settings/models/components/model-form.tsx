@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
   MessageSquare,
   UserLock,
+  Sparkles,
 } from "lucide-react";
 import Image from "next/image";
 import { Switch } from "@/components/ui/switch";
@@ -49,6 +50,7 @@ export default function ModelForm({
     logoUrl: "",
     systemPrompt: "",
     isPublic: false,
+    supportsVision: false,
   });
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +68,7 @@ export default function ModelForm({
         logoUrl: model.logoUrl || "",
         systemPrompt: model.systemPrompt || "",
         isPublic: model.isPublic,
+        supportsVision: model.supportsVision ?? false,
       });
     } else {
       setFormData({
@@ -77,6 +80,7 @@ export default function ModelForm({
         logoUrl: "",
         systemPrompt: "",
         isPublic: false,
+        supportsVision: false,
       });
     }
   }, [model]);
@@ -472,6 +476,39 @@ export default function ModelForm({
           disabled={isSubmitting}
           className="resize-none transition-colors"
         />
+      </div>
+
+      {/* Model Capabilities */}
+      <div className="space-y-4">
+        <Label className="flex items-center gap-2 text-sm font-medium">
+          <Sparkles className="text-muted-foreground h-4 w-4" />
+          模型能力
+          <span className="text-muted-foreground text-xs font-normal">
+            （根据模型实际支持的能力开启）
+          </span>
+        </Label>
+        <div className="space-y-3 rounded-lg border p-4">
+          {/* Vision Support */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Eye className="text-muted-foreground h-4 w-4" />
+              <div>
+                <p className="text-sm font-medium">视觉识别</p>
+                <p className="text-muted-foreground text-xs">
+                  支持图片输入和视觉理解
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="supportsVision"
+              checked={formData.supportsVision}
+              onCheckedChange={(checked) =>
+                setFormData((prev) => ({ ...prev, supportsVision: checked }))
+              }
+              disabled={isSubmitting}
+            />
+          </div>
+        </div>
       </div>
 
       {/* isPublic */}

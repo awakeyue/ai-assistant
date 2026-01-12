@@ -4,10 +4,17 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { decryptApiKey } from "@/lib/crypto";
+import { ChatCapabilities } from "@/types/chat";
 
 export async function POST(req: Request) {
-  const { messages, modelId }: { messages: UIMessage[]; modelId: string } =
-    await req.json();
+  const {
+    messages,
+    modelId,
+  }: {
+    messages: UIMessage[];
+    modelId: string;
+    capabilities?: ChatCapabilities;
+  } = await req.json();
 
   // Get current user
   const user = await getCurrentUser();
