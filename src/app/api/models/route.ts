@@ -71,6 +71,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Check if model name already exists for this user
+    const existingModel = await prisma.userModel.findFirst({
+      where: {
+        userId: user.id,
+        name: body.name,
+      },
+    });
+
+    if (existingModel) {
+      return NextResponse.json(
+        { error: "模型名称已存在，请使用其他名称" },
+        { status: 400 },
+      );
+    }
+
     // Encrypt API key before storing
     const encryptedApiKey = encryptApiKey(body.apiKey);
 

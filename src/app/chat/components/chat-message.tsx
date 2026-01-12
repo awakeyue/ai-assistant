@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { UIMessage } from "@ai-sdk/react";
@@ -6,6 +5,7 @@ import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { memo, useState } from "react";
 import { FileUIPart, TextUIPart } from "ai";
+import Image from "next/image";
 import {
   FileSpreadsheet,
   FileText,
@@ -219,12 +219,17 @@ const FileBlock = memo(({ filePart }: { filePart: FileUIPart }) => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <img
-                src={url}
-                alt={filename || "Uploaded image"}
-                className="mx-auto max-h-80 w-auto max-w-full object-contain"
-                loading="lazy"
-              />
+              <div className="relative mx-auto max-h-80 w-full max-w-full">
+                <Image
+                  src={url}
+                  alt={filename || "Uploaded image"}
+                  width={800}
+                  height={600}
+                  className="mx-auto h-auto max-h-80 w-auto object-contain"
+                  loading="lazy"
+                  unoptimized
+                />
+              </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">
               {filename}

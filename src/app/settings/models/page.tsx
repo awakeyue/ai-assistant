@@ -18,7 +18,7 @@ import ModelForm from "./components/model-form";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-type ViewMode = "list" | "add" | "edit";
+type ViewMode = "list" | "add" | "edit" | "copy";
 
 export default function ModelsSettingsPage() {
   const router = useRouter();
@@ -50,6 +50,18 @@ export default function ModelsSettingsPage() {
     setViewMode("add");
   };
 
+  const handleCopy = (model: UserModelConfig) => {
+    // Copy model data but exclude apiKey for security
+    const copiedModel: UserModelConfig = {
+      ...model,
+      id: "", // Clear id for new model
+      apiKey: "", // Clear apiKey for security
+      name: `${model.name} (副本)`, // Add suffix to name
+    };
+    setEditingModel(copiedModel);
+    setViewMode("copy");
+  };
+
   const handleEdit = (model: UserModelConfig) => {
     // Only allow editing if user owns the model
     if (user && model.userId === user.id) {
@@ -64,7 +76,7 @@ export default function ModelsSettingsPage() {
   };
 
   const handleFormSuccess = (model: UserModelConfig) => {
-    if (viewMode === "add") {
+    if (viewMode === "add" || viewMode === "copy") {
       addModel(model);
     } else {
       updateModel(model.id, model);
@@ -92,6 +104,8 @@ export default function ModelsSettingsPage() {
         return "添加新模型";
       case "edit":
         return `编辑模型`;
+      case "copy":
+        return "复制并新建模型";
       default:
         return "模型详情";
     }
@@ -103,6 +117,8 @@ export default function ModelsSettingsPage() {
         return "配置您的 AI 模型连接信息";
       case "edit":
         return editingModel?.name || "";
+      case "copy":
+        return "基于现有模型创建新配置";
       default:
         return "";
     }
@@ -233,6 +249,8 @@ export default function ModelsSettingsPage() {
                     model={editingModel || undefined}
                     onSuccess={handleFormSuccess}
                     onCancel={handleBack}
+                    onCopy={handleCopy}
+                    isCopyMode={viewMode === "copy"}
                   />
                 </div>
               )}

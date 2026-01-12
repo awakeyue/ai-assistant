@@ -21,6 +21,7 @@ import {
   MessageSquare,
   UserLock,
   Sparkles,
+  Copy,
 } from "lucide-react";
 import Image from "next/image";
 import { Switch } from "@/components/ui/switch";
@@ -30,14 +31,18 @@ interface ModelFormProps {
   model?: UserModelConfig;
   onSuccess: (model: UserModelConfig) => void;
   onCancel: () => void;
+  onCopy?: (model: UserModelConfig) => void;
+  isCopyMode?: boolean;
 }
 
 export default function ModelForm({
   model,
   onSuccess,
   onCancel,
+  onCopy,
+  isCopyMode = false,
 }: ModelFormProps) {
-  const isEditing = !!model;
+  const isEditing = !!model && !isCopyMode;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isAdmin = useUserStore((state) => state.isAdmin());
 
@@ -537,24 +542,41 @@ export default function ModelForm({
       )}
 
       {/* Actions */}
-      <div className="flex justify-end gap-3 border-t pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="min-w-20"
-        >
-          取消
-        </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting || isUploading}
-          className="min-w-20 shadow-sm"
-        >
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEditing ? "保存更改" : "添加模型"}
-        </Button>
+      <div className="flex justify-between gap-3 border-t pt-4">
+        <div>
+          {/* Copy button - only show in edit mode (not in copy mode or add mode) */}
+          {isEditing && onCopy && model && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onCopy(model)}
+              disabled={isSubmitting}
+              className="gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              复制并新建
+            </Button>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="min-w-20"
+          >
+            取消
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || isUploading}
+            className="min-w-20 shadow-sm"
+          >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isEditing ? "保存更改" : "添加模型"}
+          </Button>
+        </div>
       </div>
     </form>
   );

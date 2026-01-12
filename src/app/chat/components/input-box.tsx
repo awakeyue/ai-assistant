@@ -237,7 +237,7 @@ export default function InputBox({
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-60">
+              <DropdownMenuContent align="start" className="w-50">
                 {modelList.length === 0 ? (
                   <DropdownMenuItem
                     onSelect={() => router.push("/settings/models")}
@@ -259,7 +259,7 @@ export default function InputBox({
                         )}
                       >
                         <ModelLogo model={model} size="md" />
-                        <span className="text-sm">{model.name}</span>
+                        <span className="text-xs">{model.name}</span>
                       </DropdownMenuItem>
                     ))}
                   </>
@@ -344,7 +344,18 @@ const ModelLogo = memo(function ({
   const sizeClass = size === "sm" ? "size-4" : "size-5";
 
   if (!model?.logoUrl) {
-    return null;
+    return (
+      <div
+        className={cn(
+          "bg-muted flex items-center justify-center rounded border",
+          sizeClass,
+        )}
+      >
+        <span className="text-muted-foreground font-medium">
+          {model?.name?.charAt(0)?.toUpperCase() || "M"}
+        </span>
+      </div>
+    );
   }
 
   return (
