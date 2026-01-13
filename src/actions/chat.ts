@@ -232,17 +232,20 @@ export async function saveChatMessages(
   }
 
   // 删除现有消息并重新创建
+  // 为每条消息设置递增的 createdAt，确保排序稳定（每条消息间隔1ms）
+  const baseTime = Date.now();
   await prisma.$transaction([
     prisma.message.deleteMany({
       where: { chatId },
     }),
     prisma.message.createMany({
-      data: messages.map((msg) => ({
+      data: messages.map((msg, index) => ({
         id: msg.id,
         chatId,
         role: msg.role,
         content: extractContentFromMessage(msg),
         parts: msg.parts ? JSON.parse(JSON.stringify(msg.parts)) : null,
+        createdAt: new Date(baseTime + index),
       })),
     }),
   ]);
