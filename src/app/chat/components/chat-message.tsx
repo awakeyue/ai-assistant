@@ -168,7 +168,7 @@ export default ChatMessage;
 
 // --- 1. 推理/思考块组件 (Reasoning Block) ---
 function ReasoningBlock({ text }: { text: string }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   if (!text) return null;
 

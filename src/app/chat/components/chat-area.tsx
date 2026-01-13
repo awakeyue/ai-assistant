@@ -307,18 +307,19 @@ export default function ChatArea({
       )}
 
       {showScrollButton && (
-        <div className="absolute right-0 left-0" style={{ bottom: "180px" }}>
-          <div className="mx-auto max-w-4xl text-center">
-            <Button
-              onClick={handleScrollToBottomClick}
-              aria-label="Scroll to bottom"
-              variant="outline"
-              className="rounded-full shadow-md"
-            >
-              <ArrowDown />
-              {status === "streaming" ? "生成中" : ""}
-            </Button>
-          </div>
+        <div
+          className="absolute right-1/2 rounded-full"
+          style={{ bottom: "180px" }}
+        >
+          <Button
+            onClick={handleScrollToBottomClick}
+            aria-label="Scroll to bottom"
+            variant="outline"
+            className="rounded-full shadow-md"
+          >
+            <ArrowDown />
+            {status === "streaming" ? "生成中" : ""}
+          </Button>
         </div>
       )}
 

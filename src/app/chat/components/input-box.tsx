@@ -69,7 +69,7 @@ export default function InputBox({
   const supportsVision = currentModel?.supportsVision ?? false;
 
   useEffect(() => {
-    if (inputRef.current) {
+    if (location.pathname === "/chat") {
       requestAnimationFrame(() => {
         inputRef.current?.focus();
       });
