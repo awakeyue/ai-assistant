@@ -56,12 +56,6 @@ export default function ChatArea({
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  // Ref to track last scroll handler execution time for throttling
-  const lastScrollTimeRef = useRef(0);
-  // Ref for trailing call timeout to ensure final scroll state is captured
-  const scrollTrailingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
 
   const { currentModelId } = useModelStore();
   const { createdChatIds, markAsCreated, resetKey } = useChatStatusStore();
@@ -90,13 +84,6 @@ export default function ChatArea({
     ) {
       setNavigating(false);
     }
-
-    // Cleanup trailing timeout on unmount or chatId change
-    return () => {
-      if (scrollTrailingTimeoutRef.current) {
-        clearTimeout(scrollTrailingTimeoutRef.current);
-      }
-    };
   }, [stableId, serverChatId, navigatingToChatId, setNavigating]);
 
   const {
@@ -214,39 +201,25 @@ export default function ChatArea({
     return scrollHeight - scrollTop - clientHeight <= 50;
   }, []);
 
-  // Handle scroll events with throttling (100ms) and trailing call
+  // Handle scroll events - only update UI state (showScrollButton)
+  // shouldAutoScrollRef is controlled exclusively by user intent (wheel/click)
   const handleScroll = useCallback(() => {
-    const now = Date.now();
-
-    // Clear any pending trailing call
-    if (scrollTrailingTimeoutRef.current) {
-      clearTimeout(scrollTrailingTimeoutRef.current);
-      scrollTrailingTimeoutRef.current = null;
-    }
-
-    // Throttle: only execute every 100ms
-    if (now - lastScrollTimeRef.current < 100) {
-      // Schedule a trailing call to ensure final scroll state is captured
-      scrollTrailingTimeoutRef.current = setTimeout(() => {
-        const isAtBottom = checkIsAtBottom();
-        setShowScrollButton(!isAtBottom);
-        shouldAutoScrollRef.current = isAtBottom;
-      }, 100);
-      return;
-    }
-    lastScrollTimeRef.current = now;
-
-    const isAtBottom = checkIsAtBottom();
-    setShowScrollButton(!isAtBottom);
-    shouldAutoScrollRef.current = isAtBottom;
+    setShowScrollButton(!checkIsAtBottom());
   }, [checkIsAtBottom]);
 
-  // Handle wheel events - disable auto scroll when user scrolls up
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    if (e.deltaY < 0) {
-      shouldAutoScrollRef.current = false;
-    }
-  }, []);
+  // Handle wheel events - user intent controls auto-scroll
+  const handleWheel = useCallback(
+    (e: React.WheelEvent<HTMLDivElement>) => {
+      if (e.deltaY < 0) {
+        // User scrolls up -> disable auto-scroll
+        shouldAutoScrollRef.current = false;
+      } else if (e.deltaY > 0 && checkIsAtBottom()) {
+        // User scrolls down and reaches bottom -> re-enable auto-scroll
+        shouldAutoScrollRef.current = true;
+      }
+    },
+    [checkIsAtBottom],
+  );
 
   // Auto-scroll effect - updated to use virtualizer
   useEffect(() => {
