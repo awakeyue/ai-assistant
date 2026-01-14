@@ -81,18 +81,18 @@ const ChatMessage = memo(
     return (
       <div
         className={cn(
-          "mb-6 flex w-full gap-2",
+          "flex w-full gap-2",
           isUser ? "flex-row-reverse" : "justify-start",
         )}
       >
         {!isUser && (
-          <div>
+          <div className="hidden md:block">
             <AgentLogo animating={isLoading && isLatest} />
           </div>
         )}
         <div
           className={cn(
-            "relative max-w-[85%] px-3 py-2 text-sm shadow-sm transition-all md:max-w-3xl lg:max-w-4xl",
+            "relative max-w-full px-3 py-2 text-sm shadow-sm transition-all md:max-w-3xl lg:max-w-4xl",
             isUser
               ? "bg-primary text-primary-foreground group rounded-2xl rounded-tr-sm"
               : "rounded-2xl rounded-tl-sm border border-gray-100 bg-white text-gray-800 md:min-w-xl lg:min-w-3xl dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100",

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ChatStatus } from "ai";
-import { ArrowUp, CircleStop, X } from "lucide-react";
+import { ArrowUp, Square, X } from "lucide-react";
 import {
   useRef,
   useState,
@@ -275,8 +275,7 @@ export default function InputBox({
 
           {status === "streaming" ? (
             <Button size="sm" onClick={() => stop && stop()}>
-              <CircleStop size={20} />
-              stop
+              <Square size={12} />
             </Button>
           ) : (
             <Button

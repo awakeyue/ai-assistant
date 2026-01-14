@@ -268,7 +268,7 @@ export default function ChatArea({
             <EmptyState />
           </div>
         ) : (
-          <div className="min-h-8 space-y-6 pb-4">
+          <div className="min-h-8 space-y-8 pb-4">
             {messages.map((message, index) => (
               <ChatMessage
                 key={message.id}
