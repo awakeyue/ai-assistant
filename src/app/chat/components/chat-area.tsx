@@ -20,6 +20,7 @@ import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
 import { useUIStore } from "@/store/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StreamingDots } from "@/components/custom/streaming-dots";
 
 interface ChatAreaProps {
   initialMessages?: UIMessage[];
@@ -118,24 +119,14 @@ export default function ChatArea({
     },
   });
 
-  // Virtual list items: messages + streaming indicator (if active)
+  // Virtual list items: messages only (streaming indicator managed separately)
   const virtualItems = useMemo(() => {
-    const items: Array<
-      | { type: "message"; message: (typeof messages)[0]; index: number }
-      | { type: "streaming" }
-    > = messages.map((message, index) => ({
+    return messages.map((message, index) => ({
       type: "message" as const,
       message,
       index,
     }));
-
-    // Add streaming indicator as virtual item if streaming
-    if (["submitted", "streaming"].includes(status)) {
-      items.push({ type: "streaming" as const });
-    }
-
-    return items;
-  }, [messages, status]);
+  }, [messages]);
 
   // Initialize virtualizer for message list
   // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer returns unstable references by design
@@ -146,12 +137,8 @@ export default function ChatArea({
     estimateSize: () => 150,
     // Enable smooth scrolling
     overscan: 3,
-    // Key each item by message id or streaming indicator
-    getItemKey: (index) => {
-      const item = virtualItems[index];
-      if (item.type === "streaming") return "streaming-indicator";
-      return item.message.id;
-    },
+    // Key each item by message id
+    getItemKey: (index) => virtualItems[index].message.id,
   });
 
   const handleRetry = useCallback(
@@ -189,12 +176,16 @@ export default function ChatArea({
     [messages, setMessages, stableId],
   );
 
-  const generateTitle = async (text: string, targetChatId: string) => {
+  const generateTitle = async (
+    text: string,
+    targetChatId: string,
+    modelId: string,
+  ) => {
     try {
       const res = await fetch("/api/chat/title", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, modelId }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -300,7 +291,7 @@ export default function ChatArea({
       window.history.replaceState(null, "", `/chat/${stableId}`);
       await createChat(currentModelId, stableId);
       mutate("chat-list");
-      generateTitle(inputValue, stableId);
+      generateTitle(inputValue, stableId, currentModelId);
     }
   };
 
@@ -349,24 +340,6 @@ export default function ChatArea({
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const item = virtualItems[virtualRow.index];
 
-              if (item.type === "streaming") {
-                return (
-                  <div
-                    key={virtualRow.key}
-                    data-index={virtualRow.index}
-                    ref={virtualizer.measureElement}
-                    className="absolute top-0 left-0 w-full pt-4 pb-8"
-                    style={{
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
-                  >
-                    <div className="pl-12">
-                      <StreamingDots />
-                    </div>
-                  </div>
-                );
-              }
-
               return (
                 <div
                   key={virtualRow.key}
@@ -383,10 +356,24 @@ export default function ChatArea({
                     onDelete={handleDelete}
                     isLoading={status === "streaming"}
                     isLatest={item.index === messages.length - 1}
+                    isStreaming={
+                      status === "streaming" &&
+                      item.index === messages.length - 1 &&
+                      item.message.role === "assistant"
+                    }
                   />
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Streaming dots - shown outside virtualizer when streaming with empty content */}
+        {status === "submitted" && (
+          <div className="pt-4 pb-8">
+            <div className="pl-12">
+              <StreamingDots />
+            </div>
           </div>
         )}
       </div>
@@ -420,37 +407,6 @@ export default function ChatArea({
         stop={stop}
         currentChatId={stableId}
       />
-    </div>
-  );
-}
-
-export function StreamingDots() {
-  return (
-    <div
-      className={"text-muted-foreground inline-flex items-center gap-2 text-sm"}
-    >
-      <div className="flex gap-1">
-        {[...Array(3)].map((_, i) => (
-          <span
-            key={i}
-            className="size-1.5 animate-[fade_1.4s_ease-in-out_infinite] rounded-full bg-current"
-            style={{
-              animationDelay: `${i * 0.2}s`,
-            }}
-          />
-        ))}
-      </div>
-      <style jsx>{`
-        @keyframes fade {
-          0%,
-          100% {
-            opacity: 0.3;
-          }
-          50% {
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 }

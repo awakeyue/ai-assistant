@@ -30,6 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AgentLogo } from "./agent-logo";
 import { CollapsibleText } from "@/components/custom/collapsible-text";
+import { StreamingDots } from "@/components/custom/streaming-dots";
 
 interface ChatMessageProps {
   message: UIMessage;
@@ -38,10 +39,18 @@ interface ChatMessageProps {
   onDelete?: (id: string) => void;
   isLoading?: boolean;
   isLatest?: boolean;
+  isStreaming?: boolean; // 是否正在流式输出
 }
 
 const ChatMessage = memo(
-  ({ message, onRetry, onDelete, isLoading, isLatest }: ChatMessageProps) => {
+  ({
+    message,
+    onRetry,
+    onDelete,
+    isLoading,
+    isLatest,
+    isStreaming,
+  }: ChatMessageProps) => {
     const isUser = message.role === "user";
 
     // 提取纯文本内容用于复制
@@ -67,7 +76,14 @@ const ChatMessage = memo(
         {message.parts.map((part, idx) => {
           switch (part.type) {
             case "text":
-              return <TextBlock key={idx} textPart={part} isUser={isUser} />;
+              return (
+                <TextBlock
+                  key={idx}
+                  textPart={part}
+                  isUser={isUser}
+                  isStreaming={isStreaming && isLatest}
+                />
+              );
             case "reasoning":
               return <ReasoningBlock key={idx} text={part.text} />;
             case "file":
@@ -277,9 +293,11 @@ FileBlock.displayName = "FileBlock";
 const TextBlock = ({
   textPart,
   isUser,
+  isStreaming,
 }: {
   textPart: TextUIPart;
   isUser: boolean;
+  isStreaming?: boolean;
 }) => {
   // Use deferred value to reduce rendering priority during streaming
   // This allows React to skip intermediate renders and keep UI responsive
@@ -293,9 +311,36 @@ const TextBlock = ({
   }
 
   // Render Markdown for AI messages
-  return <MarkdownRenderer text={deferredText} />;
+  return <MarkdownRenderer text={deferredText} isStreaming={isStreaming} />;
 };
 TextBlock.displayName = "TextBlock";
+
+// CSS styles for streaming cursor animation
+// Injected once at module level for performance
+if (typeof document !== "undefined") {
+  const styleId = "streaming-cursor-styles";
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.textContent = `
+      @keyframes streamingBlink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+      }
+      .streaming-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 1em;
+        background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+        margin-left: 2px;
+        vertical-align: text-bottom;
+        border-radius: 1px;
+        animation: streamingBlink 1s steps(1) infinite;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
 
 // Stable remarkPlugins array reference - defined at module level
 const remarkPlugins = [remarkGfm];
@@ -407,21 +452,28 @@ const markdownComponents: Components = {
 
 // Separate component for Markdown rendering
 // Memoized to prevent unnecessary re-parses when text hasn't changed
-const MarkdownRenderer = memo(({ text }: { text: string }) => {
-  return (
-    <div
-      className="markdown-body leading-6"
-      style={{ contain: "content", contentVisibility: "auto" }}
-    >
-      <ReactMarkdown
-        remarkPlugins={remarkPlugins}
-        components={markdownComponents}
+const MarkdownRenderer = memo(
+  ({ text, isStreaming }: { text: string; isStreaming?: boolean }) => {
+    return (
+      <div
+        className="markdown-body leading-6"
+        style={{
+          contain: "content",
+          contentVisibility: "auto",
+          minHeight: "1.5em",
+        }}
       >
-        {text}
-      </ReactMarkdown>
-    </div>
-  );
-});
+        <ReactMarkdown
+          remarkPlugins={remarkPlugins}
+          components={markdownComponents}
+        >
+          {text}
+        </ReactMarkdown>
+        {isStreaming && <StreamingDots />}
+      </div>
+    );
+  },
+);
 MarkdownRenderer.displayName = "MarkdownRenderer";
 
 // --- 4. 代码块逻辑组件 (含复制功能 + 懒加载语法高亮) ---

@@ -407,7 +407,7 @@ export default function Sidebar() {
           onClick={() => setMobileSidebarOpen(true)}
           variant="ghost"
           size="sm"
-          className="fixed top-3 left-3 z-40 h-9 w-9 p-0 md:hidden"
+          className="fixed top-3 left-3 z-40 h-9 w-9 bg-gray-50 md:hidden dark:bg-gray-700"
           aria-label="Open sidebar"
         >
           <PanelLeft size={20} />

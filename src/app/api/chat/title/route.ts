@@ -6,7 +6,7 @@ import { generateText } from "ai";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { text }: { text: string } = await req.json();
+  const { text, modelId }: { text: string; modelId: string } = await req.json();
 
   // Get current user
   const user = await getCurrentUser();
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   // Fetch model configuration from database
   const modelConfig = await prisma.userModel.findFirst({
-    where: { OR: [{ userId: user.id }, { isPublic: true }] },
+    where: { id: modelId, OR: [{ userId: user.id }, { isPublic: true }] },
   });
 
   if (!modelConfig) {
