@@ -4,15 +4,34 @@ export const AgentLogo = ({ animating }: { animating?: boolean }) => {
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-xl bg-gray-200 dark:bg-gray-700",
-        animating ? "animate-bounce" : "",
+        "relative flex items-center justify-center rounded-xl bg-gray-200 dark:bg-gray-700",
       )}
     >
+      {animating && (
+        <svg
+          className="absolute inset-0 h-full w-full animate-spin"
+          viewBox="0 0 32 32"
+        >
+          <circle
+            cx="16"
+            cy="16"
+            r="15"
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth="2"
+            strokeDasharray="30 60"
+            strokeLinecap="round"
+            opacity="0.8"
+          />
+        </svg>
+      )}
+
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width={32}
         height={32}
         viewBox="0 0 32 32"
+        className="relative z-10"
       >
         <path
           fill="currentColor"

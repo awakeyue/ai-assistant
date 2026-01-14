@@ -8,8 +8,9 @@ import InputBox from "./input-box";
 import { useModelStore, useChatStatusStore } from "@/store/chat";
 import { useChatCapabilitiesStore } from "@/store/chat-capabilities";
 import { DefaultChatTransport } from "ai";
-import { AlertCircleIcon, ArrowDown } from "lucide-react";
+import { AlertCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollToBottomButton } from "@/components/custom/scroll-to-bottom-button";
 import { convertFileToUIPart } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { saveChatMessages, createChat, updateChatTitle } from "@/actions/chat";
@@ -53,6 +54,8 @@ export default function ChatArea({
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  // Ref to track last scroll handler execution time for throttling
+  const lastScrollTimeRef = useRef(0);
 
   const { currentModelId } = useModelStore();
   const { createdChatIds, markAsCreated, resetKey } = useChatStatusStore();
@@ -94,7 +97,7 @@ export default function ChatArea({
   } = useChat({
     id: stableId,
     messages: initialMessages,
-    experimental_throttle: 50,
+    experimental_throttle: 80, // Increased from 50ms to reduce re-renders during streaming
     transport: new DefaultChatTransport({
       api: "/api/chat",
     }),
@@ -172,8 +175,15 @@ export default function ChatArea({
     return scrollHeight - scrollTop - clientHeight <= 50;
   }, []);
 
-  // Handle scroll events
+  // Handle scroll events with throttling (100ms)
   const handleScroll = useCallback(() => {
+    const now = Date.now();
+    // Throttle: only execute every 100ms
+    if (now - lastScrollTimeRef.current < 100) {
+      return;
+    }
+    lastScrollTimeRef.current = now;
+
     const isAtBottom = checkIsAtBottom();
     setShowScrollButton(!isAtBottom);
     shouldAutoScrollRef.current = isAtBottom;
@@ -306,22 +316,11 @@ export default function ChatArea({
         </Alert>
       )}
 
-      {showScrollButton && (
-        <div
-          className="absolute right-1/2 rounded-full"
-          style={{ bottom: "180px" }}
-        >
-          <Button
-            onClick={handleScrollToBottomClick}
-            aria-label="Scroll to bottom"
-            variant="outline"
-            className="rounded-full shadow-md"
-          >
-            <ArrowDown />
-            {status === "streaming" ? "生成中" : ""}
-          </Button>
-        </div>
-      )}
+      <ScrollToBottomButton
+        onClick={handleScrollToBottomClick}
+        visible={showScrollButton}
+        loading={status === "streaming"}
+      />
 
       <InputBox
         onSubmit={handleSendMessage}

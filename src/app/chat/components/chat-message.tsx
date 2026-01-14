@@ -3,7 +3,7 @@
 import { UIMessage } from "@ai-sdk/react";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { memo, useState } from "react";
+import { memo, useState, useCallback, useDeferredValue } from "react";
 import { FileUIPart, TextUIPart } from "ai";
 import Image from "next/image";
 import {
@@ -51,7 +51,7 @@ const ChatMessage = memo(
 
     // 复制功能
     const [isCopied, setIsCopied] = useState(false);
-    const handleCopy = async () => {
+    const handleCopy = useCallback(async () => {
       try {
         await navigator.clipboard.writeText(textContent);
         setIsCopied(true);
@@ -59,7 +59,7 @@ const ChatMessage = memo(
       } catch (err) {
         console.error("Failed to copy:", err);
       }
-    };
+    }, [textContent]);
 
     const messageContent = (
       <div className="flex flex-col gap-3">
@@ -78,12 +78,22 @@ const ChatMessage = memo(
       </div>
     );
 
+    // Memoize retry and delete handlers
+    const handleRetry = useCallback(() => {
+      onRetry?.(message.id);
+    }, [onRetry, message.id]);
+
+    const handleDelete = useCallback(() => {
+      onDelete?.(message.id);
+    }, [onDelete, message.id]);
+
     return (
       <div
         className={cn(
           "flex w-full gap-2",
           isUser ? "flex-row-reverse" : "justify-start",
         )}
+        style={{ contain: "layout style" }}
       >
         {!isUser && (
           <div className="hidden md:block">
@@ -131,7 +141,7 @@ const ChatMessage = memo(
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => onRetry(message.id)}
+                      onClick={handleRetry}
                       className="flex items-center gap-1 rounded p-1 text-xs transition-colors hover:bg-black/5"
                     >
                       <RotateCw size={14} />
@@ -146,7 +156,7 @@ const ChatMessage = memo(
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => onDelete(message.id)}
+                      onClick={handleDelete}
                       className="flex items-center gap-1 rounded p-1 text-xs transition-colors hover:bg-black/5"
                     >
                       <Trash2 size={14} />
@@ -262,38 +272,40 @@ const FileBlock = memo(({ filePart }: { filePart: FileUIPart }) => {
 FileBlock.displayName = "FileBlock";
 
 // --- 3. 核心文本渲染组件 (Text Block with Markdown) ---
-const TextBlock = memo(
-  ({ textPart, isUser }: { textPart: TextUIPart; isUser: boolean }) => {
-    // 如果是用户，直接显示纯文本，不解析 Markdown (防止 XSS 或者用户输入的格式乱掉，也可选择开启)
-    if (isUser) {
-      return (
-        <div className="leading-relaxed whitespace-pre-wrap">
-          {textPart.text}
-        </div>
-      );
-    }
+// Uses useDeferredValue to keep UI responsive during rapid streaming updates
+const TextBlock = ({
+  textPart,
+  isUser,
+}: {
+  textPart: TextUIPart;
+  isUser: boolean;
+}) => {
+  // Use deferred value to reduce rendering priority during streaming
+  // This allows React to skip intermediate renders and keep UI responsive
+  const deferredText = useDeferredValue(textPart.text);
 
+  // 如果是用户，直接显示纯文本，不解析 Markdown (防止 XSS 或者用户输入的格式乱掉，也可选择开启)
+  if (isUser) {
     return (
-      <div className="markdown-body leading-6">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={MarkdownComponents}
-        >
-          {textPart.text}
-        </ReactMarkdown>
-      </div>
+      <div className="leading-relaxed whitespace-pre-wrap">{deferredText}</div>
     );
-  },
-);
+  }
+
+  // Render Markdown for AI messages
+  return <MarkdownRenderer text={deferredText} />;
+};
 TextBlock.displayName = "TextBlock";
 
-// --- 4. Markdown 组件定义 (样式核心) ---
+// Stable remarkPlugins array reference - defined at module level
+const remarkPlugins = [remarkGfm];
 
-const MarkdownComponents: Components = {
+// Stable MarkdownComponents reference - defined at module level to avoid recreation
+const markdownComponents: Components = {
   // 代码块处理 (支持高亮 + 复制)
-  code({ inline, className, children, ...props }: any) {
+  code({ className, children, ...props }) {
     const match = /language-(\w+)/.exec(className || "");
-    const isInline = inline || !match;
+    // Check if it's inline code (no language class means inline)
+    const isInline = !match;
     const codeString = String(children).replace(/\n$/, "");
 
     if (isInline) {
@@ -308,19 +320,13 @@ const MarkdownComponents: Components = {
     }
 
     return (
-      <CodeBlock
-        language={match ? match[1] : "text"}
-        value={codeString}
-        {...props}
-      />
+      <CodeBlock language={match ? match[1] : "text"} value={codeString} />
     );
   },
 
   // 表格处理
   table: ({ children }) => (
-    // 外层容器：只在表格宽度真的超过屏幕时才显示滚动条
     <div className="scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent my-4 w-full overflow-x-auto overflow-y-hidden rounded-lg border border-gray-200">
-      {/* min-w-full 确保表格至少占满容器宽度 */}
       <table className="w-full min-w-full table-auto border-collapse text-left text-sm">
         {children}
       </table>
@@ -392,12 +398,31 @@ const MarkdownComponents: Components = {
   hr: () => <hr className="my-6 border-gray-200" />,
 };
 
-// --- 5. 代码块逻辑组件 (含复制功能) ---
+// Separate component for Markdown rendering
+// Memoized to prevent unnecessary re-parses when text hasn't changed
+const MarkdownRenderer = memo(({ text }: { text: string }) => {
+  return (
+    <div
+      className="markdown-body leading-6"
+      style={{ contain: "content", contentVisibility: "auto" }}
+    >
+      <ReactMarkdown
+        remarkPlugins={remarkPlugins}
+        components={markdownComponents}
+      >
+        {text}
+      </ReactMarkdown>
+    </div>
+  );
+});
+MarkdownRenderer.displayName = "MarkdownRenderer";
+
+// --- 4. 代码块逻辑组件 (含复制功能) ---
 const CodeBlock = memo(
   ({ language, value }: { language: string; value: string }) => {
     const [isCopied, setIsCopied] = useState(false);
 
-    const handleCopy = async () => {
+    const handleCopy = useCallback(async () => {
       try {
         await navigator.clipboard.writeText(value);
         setIsCopied(true);
@@ -405,10 +430,13 @@ const CodeBlock = memo(
       } catch (err) {
         console.error("Failed to copy:", err);
       }
-    };
+    }, [value]);
 
     return (
-      <div className="group relative my-4 overflow-hidden rounded-lg border border-gray-200 bg-[#1e1e1e] dark:border-gray-700">
+      <div
+        className="group relative my-4 overflow-hidden rounded-lg border border-gray-200 bg-[#1e1e1e] dark:border-gray-700"
+        style={{ contain: "layout style" }}
+      >
         {/* 代码块头部：显示语言和复制按钮 */}
         <div className="flex items-center justify-between bg-[#2d2d2d] px-4 py-2 text-xs text-gray-400">
           <div className="flex items-center gap-2">
@@ -441,6 +469,12 @@ const CodeBlock = memo(
           </pre>
         </div>
       </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.language === nextProps.language &&
+      prevProps.value === nextProps.value
     );
   },
 );
