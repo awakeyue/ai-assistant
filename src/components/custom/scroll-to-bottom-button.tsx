@@ -39,7 +39,7 @@ export function ScrollToBottomButton({
             <circle
               cx="20"
               cy="20"
-              r="18"
+              r="19"
               fill="none"
               stroke="#3b82f6"
               strokeWidth="2"

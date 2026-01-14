@@ -2,6 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import ChatMessage from "./chat-message";
 import EmptyState from "./empty-state";
 import InputBox from "./input-box";
@@ -17,7 +18,7 @@ import { saveChatMessages, createChat, updateChatTitle } from "@/actions/chat";
 import { useSWRConfig } from "swr";
 import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
-import { useUIStore } from "../../../store/ui-store";
+import { useUIStore } from "@/store/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ChatAreaProps {
@@ -56,6 +57,10 @@ export default function ChatArea({
   const [showScrollButton, setShowScrollButton] = useState(false);
   // Ref to track last scroll handler execution time for throttling
   const lastScrollTimeRef = useRef(0);
+  // Ref for trailing call timeout to ensure final scroll state is captured
+  const scrollTrailingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const { currentModelId } = useModelStore();
   const { createdChatIds, markAsCreated, resetKey } = useChatStatusStore();
@@ -84,6 +89,13 @@ export default function ChatArea({
     ) {
       setNavigating(false);
     }
+
+    // Cleanup trailing timeout on unmount or chatId change
+    return () => {
+      if (scrollTrailingTimeoutRef.current) {
+        clearTimeout(scrollTrailingTimeoutRef.current);
+      }
+    };
   }, [stableId, serverChatId, navigatingToChatId, setNavigating]);
 
   const {
@@ -103,6 +115,42 @@ export default function ChatArea({
     }),
     onFinish: async ({ messages }) => {
       await saveChatMessages(stableId, messages);
+    },
+  });
+
+  // Virtual list items: messages + streaming indicator (if active)
+  const virtualItems = useMemo(() => {
+    const items: Array<
+      | { type: "message"; message: (typeof messages)[0]; index: number }
+      | { type: "streaming" }
+    > = messages.map((message, index) => ({
+      type: "message" as const,
+      message,
+      index,
+    }));
+
+    // Add streaming indicator as virtual item if streaming
+    if (["submitted", "streaming"].includes(status)) {
+      items.push({ type: "streaming" as const });
+    }
+
+    return items;
+  }, [messages, status]);
+
+  // Initialize virtualizer for message list
+  // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer returns unstable references by design
+  const virtualizer = useVirtualizer({
+    count: virtualItems.length,
+    getScrollElement: () => scrollRef.current,
+    // Estimate row height - messages vary in height
+    estimateSize: () => 150,
+    // Enable smooth scrolling
+    overscan: 3,
+    // Key each item by message id or streaming indicator
+    getItemKey: (index) => {
+      const item = virtualItems[index];
+      if (item.type === "streaming") return "streaming-indicator";
+      return item.message.id;
     },
   });
 
@@ -160,12 +208,12 @@ export default function ChatArea({
     }
   };
 
-  // Simple scroll to bottom
+  // Simple scroll to bottom - updated for virtualizer
   const scrollToBottom = useCallback(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-    container.scrollTop = container.scrollHeight;
-  }, []);
+    if (virtualItems.length > 0) {
+      virtualizer.scrollToIndex(virtualItems.length - 1, { align: "end" });
+    }
+  }, [virtualizer, virtualItems.length]);
 
   // Check if user is near bottom
   const checkIsAtBottom = useCallback(() => {
@@ -175,11 +223,24 @@ export default function ChatArea({
     return scrollHeight - scrollTop - clientHeight <= 50;
   }, []);
 
-  // Handle scroll events with throttling (100ms)
+  // Handle scroll events with throttling (100ms) and trailing call
   const handleScroll = useCallback(() => {
     const now = Date.now();
+
+    // Clear any pending trailing call
+    if (scrollTrailingTimeoutRef.current) {
+      clearTimeout(scrollTrailingTimeoutRef.current);
+      scrollTrailingTimeoutRef.current = null;
+    }
+
     // Throttle: only execute every 100ms
     if (now - lastScrollTimeRef.current < 100) {
+      // Schedule a trailing call to ensure final scroll state is captured
+      scrollTrailingTimeoutRef.current = setTimeout(() => {
+        const isAtBottom = checkIsAtBottom();
+        setShowScrollButton(!isAtBottom);
+        shouldAutoScrollRef.current = isAtBottom;
+      }, 100);
       return;
     }
     lastScrollTimeRef.current = now;
@@ -196,12 +257,15 @@ export default function ChatArea({
     }
   }, []);
 
-  // Auto-scroll effect
+  // Auto-scroll effect - updated to use virtualizer
   useEffect(() => {
-    if (shouldAutoScrollRef.current) {
-      scrollToBottom();
+    if (shouldAutoScrollRef.current && virtualItems.length > 0) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        virtualizer.scrollToIndex(virtualItems.length - 1, { align: "end" });
+      });
     }
-  }, [messages, status, scrollToBottom]);
+  }, [messages, status, virtualizer, virtualItems.length]);
 
   const handleSendMessage = async (inputValue: string, attachments: File[]) => {
     // Ensure model is selected
@@ -278,23 +342,51 @@ export default function ChatArea({
             <EmptyState />
           </div>
         ) : (
-          <div className="min-h-8 space-y-8 pb-4">
-            {messages.map((message, index) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                onRetry={handleRetry}
-                onDelete={handleDelete}
-                isLoading={status === "streaming"}
-                isLatest={index === messages.length - 1}
-              />
-            ))}
-            {["submitted", "streaming"].includes(status) && (
-              <div className="pl-12">
-                <StreamingDots />
-              </div>
-            )}
-            <div className="h-4" />
+          <div
+            className="relative w-full"
+            style={{ height: `${virtualizer.getTotalSize()}px` }}
+          >
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const item = virtualItems[virtualRow.index];
+
+              if (item.type === "streaming") {
+                return (
+                  <div
+                    key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
+                    className="absolute top-0 left-0 w-full pt-4 pb-8"
+                    style={{
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <div className="pl-12">
+                      <StreamingDots />
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
+                  className="absolute top-0 left-0 w-full pt-4 pb-8"
+                  style={{
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <ChatMessage
+                    message={item.message}
+                    onRetry={handleRetry}
+                    onDelete={handleDelete}
+                    isLoading={status === "streaming"}
+                    isLatest={item.index === messages.length - 1}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

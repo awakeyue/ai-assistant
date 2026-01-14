@@ -20,6 +20,7 @@ import {
   RotateCw, // 重试图标
   Trash2, // 删除图标
 } from "lucide-react";
+import { SyntaxHighlighter } from "@/components/custom/syntax-highlighter";
 import {
   Tooltip,
   TooltipContent,
@@ -311,7 +312,7 @@ const markdownComponents: Components = {
     if (isInline) {
       return (
         <code
-          className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-sm text-red-500 dark:bg-gray-800 dark:text-red-400"
+          className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-sm text-red-500 dark:bg-gray-400/5 dark:text-red-400"
           {...props}
         >
           {children}
@@ -326,7 +327,7 @@ const markdownComponents: Components = {
 
   // 表格处理
   table: ({ children }) => (
-    <div className="scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent my-4 w-full overflow-x-auto overflow-y-hidden rounded-lg border border-gray-200">
+    <div className="scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent dark:scrollbar-thumb-gray-500 my-4 w-full overflow-x-auto overflow-y-hidden rounded-lg border border-gray-200 dark:border-gray-600">
       <table className="w-full min-w-full table-auto border-collapse text-left text-sm">
         {children}
       </table>
@@ -334,35 +335,41 @@ const markdownComponents: Components = {
   ),
 
   thead: ({ children }) => (
-    <thead className="bg-gray-50 text-gray-700">{children}</thead>
+    <thead className="bg-gray-50 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+      {children}
+    </thead>
   ),
 
   tbody: ({ children }) => (
-    <tbody className="divide-y divide-gray-200 bg-white">{children}</tbody>
+    <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-600 dark:bg-gray-700/50">
+      {children}
+    </tbody>
   ),
 
   tr: ({ children }) => (
-    <tr className="transition-colors hover:bg-gray-50/50">{children}</tr>
+    <tr className="transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-700/50">
+      {children}
+    </tr>
   ),
 
   th: ({ children }) => (
-    <th className="border-b border-gray-200 px-4 py-3 text-left align-middle font-semibold wrap-break-word text-gray-900">
+    <th className="border-b border-gray-200 px-4 py-3 text-left align-middle font-semibold wrap-break-word text-gray-900 dark:border-gray-600 dark:text-gray-100">
       {children}
     </th>
   ),
 
   td: ({ children }) => (
-    <td className="px-4 py-3 align-top leading-relaxed wrap-break-word text-gray-600">
+    <td className="px-4 py-3 align-top leading-relaxed wrap-break-word text-gray-600 dark:text-gray-300">
       {children}
     </td>
   ),
   // 基础排版
   p: ({ children }) => <p className="mb-4 leading-7 last:mb-0">{children}</p>,
   ul: ({ children }) => (
-    <ul className="mb-4 list-disc space-y-1 pl-6">{children}</ul>
+    <ul className="mb-4 list-disc space-y-2 pl-6">{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="mb-4 list-decimal space-y-1 pl-6">{children}</ol>
+    <ol className="mb-4 list-decimal space-y-2 pl-6">{children}</ol>
   ),
   li: ({ children }) => <li className="pl-1">{children}</li>,
   h1: ({ children }) => (
@@ -417,7 +424,7 @@ const MarkdownRenderer = memo(({ text }: { text: string }) => {
 });
 MarkdownRenderer.displayName = "MarkdownRenderer";
 
-// --- 4. 代码块逻辑组件 (含复制功能) ---
+// --- 4. 代码块逻辑组件 (含复制功能 + 懒加载语法高亮) ---
 const CodeBlock = memo(
   ({ language, value }: { language: string; value: string }) => {
     const [isCopied, setIsCopied] = useState(false);
@@ -462,11 +469,15 @@ const CodeBlock = memo(
           </button>
         </div>
 
-        {/* 语法高亮区域 */}
-        <div className="overflow-x-auto p-4 font-mono text-sm leading-relaxed">
-          <pre>
-            <code className="text-white/80">{value}</code>
-          </pre>
+        {/* 语法高亮区域 - 使用懒加载的 SyntaxHighlighter */}
+        <div
+          className="overflow-x-auto p-4 font-mono text-sm leading-relaxed [&::-webkit-scrollbar]:h-4 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-track]:bg-transparent"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "#4b5563 transparent",
+          }}
+        >
+          <SyntaxHighlighter code={value} language={language} />
         </div>
       </div>
     );
