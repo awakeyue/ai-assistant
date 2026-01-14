@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageSquare, Sparkles, Zap, Shield } from "lucide-react";
+import { MessageSquare, Sparkles, Zap, Shield, Github } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="bg-background flex min-h-screen flex-col">
+    <div className="bg-background flex h-full flex-col overflow-y-auto">
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto flex h-14 items-center px-4">
@@ -87,9 +87,14 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t py-4">
-        <p className="text-muted-foreground text-center text-sm">
-          Powered by AI · Made with ❤️
-        </p>
+        <Link
+          className="flex items-center justify-center"
+          href="https://github.com/awakeyue/ai-assistant"
+          target="_blank"
+        >
+          <Github className="ml-1 h-4 w-4" />
+          AI Assistant
+        </Link>
       </footer>
     </div>
   );

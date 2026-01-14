@@ -1,15 +1,24 @@
-export default function EmptyState() {
+import { MessageSquare, Zap } from "lucide-react";
+
+export default function ChatEmptyState2() {
   return (
-    <div className="flex w-full flex-col items-center justify-center py-12">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-        <span className="text-3xl">✨</span>
+    <div className="flex h-full w-full items-center justify-center px-4">
+      <div className="flex max-w-lg flex-col items-center text-center">
+        <div className="relative mb-8">
+          <div className="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
+            <MessageSquare className="text-primary h-8 w-8" strokeWidth={2} />
+          </div>
+          <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500">
+            <Zap className="h-3.5 w-3.5 text-white" fill="currentColor" />
+          </div>
+        </div>
+        <h2 className="text-foreground mb-2 text-2xl font-bold text-balance">
+          有什么可以帮你？
+        </h2>
+        <p className="text-muted-foreground text-sm text-pretty">
+          提出你的问题，让我们开始对话吧
+        </p>
       </div>
-      <h2 className="mb-2 text-2xl font-semibold text-gray-900 dark:text-gray-300">
-        开始新的对话
-      </h2>
-      <p className="text-gray-600 dark:text-gray-400">
-        有什么问题尽管问，我会尽力帮助你。
-      </p>
     </div>
   );
 }
