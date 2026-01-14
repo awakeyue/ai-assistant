@@ -1,25 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useUIStore } from "@/store/ui-store";
 
 const MOBILE_BREAKPOINT = 768;
 
+/**
+ * @deprecated Use `useUIStore((state) => state.isMobile)` instead.
+ * This hook is kept for backward compatibility.
+ * The isMobile state is now managed by zustand in ui-store.
+ */
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined);
-
-  useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    };
-
-    // Set initial value
-    onChange();
-
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-
+  const isMobile = useUIStore((state) => state.isMobile);
   return isMobile;
 }
+
+export { MOBILE_BREAKPOINT };

@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 import { useModelStore } from "@/store/chat";
 import { useUserStore } from "@/store/user";
+import { useUIStore } from "@/store/ui-store";
 import { UserModelConfig } from "@/types/chat";
 import ModelList from "./components/model-list";
 import ModelForm from "./components/model-form";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 type ViewMode = "list" | "add" | "edit" | "copy";
@@ -26,7 +26,7 @@ export default function ModelsSettingsPage() {
   const [editingModel, setEditingModel] = useState<UserModelConfig | null>(
     null,
   );
-  const isMobile = useIsMobile();
+  const isMobile = useUIStore((state) => state.isMobile);
 
   const {
     modelList,

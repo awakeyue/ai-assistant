@@ -34,7 +34,6 @@ import { useRouter, usePathname } from "next/navigation";
 import useSWR from "swr";
 import { useUIStore } from "@/store/ui-store";
 import { useTransition, useEffect, useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { User as UserInfo } from "@/types/user";
 import { useUserStore } from "@/store/user";
 import SidebarUserMenu from "./sidebar-user-menu";
@@ -228,6 +227,7 @@ const SidebarContent = ({
 
 export default function Sidebar() {
   const {
+    isMobile,
     isSidebarCollapsed,
     toggleSidebar,
     isNavigating,
@@ -239,7 +239,6 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
-  const isMobile = useIsMobile();
   const { user } = useUserStore();
 
   // Rename dialog state

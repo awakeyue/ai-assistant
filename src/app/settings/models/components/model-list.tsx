@@ -219,7 +219,7 @@ export default function ModelList({
               {/* Actions - Only show for owner */}
               {canModify && (
                 <div
-                  className="ml-3 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                  className="ml-3 flex items-center gap-1 duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Button

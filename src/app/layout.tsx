@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import UserInitializer from "@/components/custom/user-initializer";
+import MobileInitializer from "@/components/custom/mobile-initializer";
 import { getCurrentUser } from "@/lib/auth";
 import { ThemeProvider } from "next-themes";
 
@@ -38,6 +39,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <MobileInitializer />
           {children}
           <Toaster position="top-center" />
           <UserInitializer user={user} />

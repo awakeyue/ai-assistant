@@ -56,6 +56,8 @@ export default function ChatArea({
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  // Track touch start position for mobile scroll detection
+  const touchStartYRef = useRef<number | null>(null);
 
   const { currentModelId } = useModelStore();
   const { createdChatIds, markAsCreated, resetKey } = useChatStatusStore();
@@ -207,7 +209,7 @@ export default function ChatArea({
     setShowScrollButton(!checkIsAtBottom());
   }, [checkIsAtBottom]);
 
-  // Handle wheel events - user intent controls auto-scroll
+  // Handle wheel events (desktop) - user intent controls auto-scroll
   const handleWheel = useCallback(
     (e: React.WheelEvent<HTMLDivElement>) => {
       if (e.deltaY < 0) {
@@ -220,6 +222,36 @@ export default function ChatArea({
     },
     [checkIsAtBottom],
   );
+
+  // Handle touch events (mobile) - user intent controls auto-scroll
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      touchStartYRef.current = e.touches[0].clientY;
+    },
+    [],
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (touchStartYRef.current === null) return;
+
+      const touchCurrentY = e.touches[0].clientY;
+      const deltaY = touchStartYRef.current - touchCurrentY;
+
+      if (deltaY < -10) {
+        // User swipes down (scroll up) -> disable auto-scroll
+        shouldAutoScrollRef.current = false;
+      } else if (deltaY > 10 && checkIsAtBottom()) {
+        // User swipes up (scroll down) and reaches bottom -> re-enable auto-scroll
+        shouldAutoScrollRef.current = true;
+      }
+    },
+    [checkIsAtBottom],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    touchStartYRef.current = null;
+  }, []);
 
   // Auto-scroll effect - updated to use virtualizer
   useEffect(() => {
@@ -299,6 +331,9 @@ export default function ChatArea({
         ref={scrollRef}
         onScroll={handleScroll}
         onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         className="scrollbar-hide min-h-0 flex-1 overflow-y-auto"
       >
         {messages.length === 0 ? (
