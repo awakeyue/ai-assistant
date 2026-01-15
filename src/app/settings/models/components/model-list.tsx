@@ -4,7 +4,7 @@ import { UserModelConfig } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2, Star, StarOff, Plus, Bot, Lock } from "lucide-react";
+import { Trash2, Star, Plus, Bot, Lock } from "lucide-react";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -219,22 +219,24 @@ export default function ModelList({
               {/* Actions - Only show for owner */}
               {canModify && (
                 <div
-                  className="ml-3 flex items-center gap-1 duration-200"
+                  className="ml-3 flex items-center gap-1"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/30"
+                    className="h-8 w-8"
                     onClick={() => handleSetDefault(model.id)}
                     disabled={model.isDefault}
                     title={model.isDefault ? "当前为默认模型" : "设为默认"}
                   >
-                    {model.isDefault ? (
-                      <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
-                    ) : (
-                      <StarOff className="h-4 w-4" />
-                    )}
+                    <Star
+                      className={`h-4 w-4 ${
+                        model.isDefault
+                          ? "fill-amber-500 text-amber-500"
+                          : "text-muted-foreground"
+                      }`}
+                    />
                   </Button>
 
                   <AlertDialog>
@@ -242,7 +244,7 @@ export default function ModelList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="hover:bg-destructive/10 hover:text-destructive h-8 w-8"
+                        className="h-8 w-8"
                         title="删除"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -266,13 +268,6 @@ export default function ModelList({
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                </div>
-              )}
-
-              {/* Always visible star for default model (only for owner) */}
-              {model.isDefault && canModify && (
-                <div className="ml-3 group-hover:hidden">
-                  <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
                 </div>
               )}
 

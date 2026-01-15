@@ -33,9 +33,13 @@ export default function LoginPage() {
   const [resendCountdown, setResendCountdown] = useState(0);
   const router = useRouter();
 
-  const handleEmailSubmit = async (formData: FormData) => {
+  const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setLoading(true);
+
     try {
+      const formData = new FormData(e.currentTarget);
+
       if (isLogin) {
         const result = await signInWithEmail(formData);
         if (result?.error) {
@@ -237,11 +241,16 @@ export default function LoginPage() {
             disabled={oauthLoading || loading}
           >
             {oauthLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                正在跳转...
+              </>
             ) : (
-              <Github className="mr-2 h-4 w-4" />
+              <>
+                <Github className="mr-2 h-4 w-4" />
+                使用 GitHub 登录
+              </>
             )}
-            {oauthLoading ? "正在跳转..." : "使用 GitHub 登录"}
           </Button>
 
           <div className="relative">
@@ -256,7 +265,7 @@ export default function LoginPage() {
           </div>
 
           {/* Email login/register form */}
-          <form action={handleEmailSubmit} className="space-y-4">
+          <form onSubmit={handleEmailSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
                 <Label htmlFor="name">用户名（可选）</Label>
@@ -265,6 +274,7 @@ export default function LoginPage() {
                   name="name"
                   type="text"
                   placeholder="请输入用户名"
+                  disabled={loading || oauthLoading}
                 />
               </div>
             )}
@@ -276,6 +286,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="请输入邮箱"
                 required
+                disabled={loading || oauthLoading}
               />
             </div>
             <div className="space-y-2">
@@ -287,9 +298,14 @@ export default function LoginPage() {
                 placeholder="请输入密码"
                 required
                 minLength={6}
+                disabled={loading || oauthLoading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || oauthLoading}
+            >
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -311,7 +327,8 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-primary ml-1 font-medium hover:underline"
+              className="text-primary ml-1 font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={loading || oauthLoading}
             >
               {isLogin ? "立即注册" : "去登录"}
             </button>

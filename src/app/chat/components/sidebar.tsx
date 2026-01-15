@@ -177,7 +177,13 @@ const SidebarContent = ({
                       {!isLoadingThisChat && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="opacity-0 transition-opacity group-hover:opacity-100">
+                            <button
+                              className={cn(
+                                inSheet
+                                  ? "opacity-50 transition-opacity group-hover:opacity-100"
+                                  : "opacity-0 transition-opacity group-hover:opacity-100",
+                              )}
+                            >
                               <MoreVertical size={16} />
                             </button>
                           </DropdownMenuTrigger>

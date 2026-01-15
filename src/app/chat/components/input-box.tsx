@@ -273,19 +273,33 @@ export default function InputBox({
             />
           </div>
 
-          {status === "streaming" ? (
-            <Button size="sm" onClick={() => stop && stop()}>
-              <Square size={12} />
-            </Button>
+          {status === "streaming" || status === "submitted" ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => stop && stop()}
+                >
+                  <Square size={12} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">取消</TooltipContent>
+            </Tooltip>
           ) : (
-            <Button
-              onClick={handleSend}
-              disabled={disabled || (!input.trim() && files.length === 0)}
-              size="sm"
-              className="disabled:bg-white-400 dark:bg-black-400 rounded-lg px-3 py-2 disabled:text-white"
-            >
-              <ArrowUp size={20} />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleSend}
+                  disabled={disabled || (!input.trim() && files.length === 0)}
+                  size="sm"
+                  className="disabled:bg-white-400 dark:bg-black-400 rounded-lg px-3 py-2 disabled:text-white"
+                >
+                  <ArrowUp size={20} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">发送</TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>
