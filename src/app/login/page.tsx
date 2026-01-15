@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,7 @@ import { signUpWithEmail, signInWithEmail } from "@/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
@@ -32,6 +32,29 @@ export default function LoginPage() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Handle OAuth error from callback redirect
+  useEffect(() => {
+    const error = searchParams.get("error");
+    const errorDescription = searchParams.get("error_description");
+
+    if (error) {
+      // Map error codes to user-friendly messages
+      const errorMessages: Record<string, string> = {
+        auth_error: "登录认证失败，请重试",
+        access_denied: "您取消了授权或拒绝了访问",
+        server_error: "服务器错误，请稍后重试",
+      };
+
+      const message =
+        errorDescription || errorMessages[error] || `登录失败: ${error}`;
+      toast.error(message);
+
+      // Clean up URL params without triggering navigation
+      window.history.replaceState({}, "", "/login");
+    }
+  }, [searchParams]);
 
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -336,5 +359,22 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 p-4 dark:from-gray-900 dark:to-gray-800">
+          <div className="animate-pulse">
+            <div className="bg-primary/10 mx-auto mb-4 h-12 w-12 rounded-xl" />
+            <div className="bg-muted h-4 w-32 rounded" />
+          </div>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }
