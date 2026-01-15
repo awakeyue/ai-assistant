@@ -85,7 +85,13 @@ const ChatMessage = memo(
                 />
               );
             case "reasoning":
-              return <ReasoningBlock key={idx} text={part.text} />;
+              return (
+                <ReasoningBlock
+                  key={idx}
+                  text={part.text}
+                  isStreaming={!!isStreaming}
+                />
+              );
             case "file":
               return <FileBlock key={idx} filePart={part} />;
             default:
@@ -194,7 +200,13 @@ ChatMessage.displayName = "ChatMessage";
 export default ChatMessage;
 
 // --- 1. 推理/思考块组件 (Reasoning Block) ---
-function ReasoningBlock({ text }: { text: string }) {
+function ReasoningBlock({
+  text,
+  isStreaming,
+}: {
+  text: string;
+  isStreaming: boolean;
+}) {
   const [isOpen, setIsOpen] = useState(true);
 
   if (!text) return null;
@@ -205,7 +217,10 @@ function ReasoningBlock({ text }: { text: string }) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center gap-2 rounded-t-lg px-3 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-100/50"
       >
-        <BrainCircuit size={14} className="animate-pulse" />
+        <BrainCircuit
+          size={14}
+          className={cn(isStreaming && "animate-pulse")}
+        />
         <span>思考过程</span>
         <span className="ml-auto text-amber-400">
           {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

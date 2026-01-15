@@ -220,7 +220,7 @@ export default function InputBox({
                   title="选择模型"
                   size="sm"
                   variant="ghost"
-                  className="max-w-30 gap-1.5 outline-none"
+                  className="max-w-40 gap-1.5 outline-none"
                 >
                   {mounted &&
                     !isLoading &&
@@ -237,7 +237,7 @@ export default function InputBox({
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-50">
+              <DropdownMenuContent align="start" className="w-60">
                 {modelList.length === 0 ? (
                   <DropdownMenuItem
                     onSelect={() => router.push("/settings/models")}
