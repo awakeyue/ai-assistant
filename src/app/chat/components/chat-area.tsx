@@ -61,7 +61,8 @@ export default function ChatArea({
 
   const { currentModelId } = useModelStore();
   const { createdChatIds, markAsCreated, resetKey } = useChatStatusStore();
-  const { isNavigating, navigatingToChatId, setNavigating } = useUIStore();
+  const { isNavigating, navigatingToChatId, setNavigating, isMobile } =
+    useUIStore();
 
   const stableId = useMemo(
     () => (resetKey ? serverChatId || nanoid(10) : serverChatId || nanoid(10)),
@@ -379,7 +380,7 @@ export default function ChatArea({
         {/* Streaming dots - shown outside virtualizer when streaming with empty content */}
         {status === "submitted" && (
           <div className="pt-4 pb-8">
-            <div className="pl-12">
+            <div className={isMobile ? "pl-2" : "pl-12"}>
               <StreamingDots />
             </div>
           </div>
