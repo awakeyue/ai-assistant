@@ -460,6 +460,7 @@ const MarkdownRenderer = memo(
         style={{
           contain: "content",
           contentVisibility: "auto",
+          containIntrinsicSize: "0 100px",
           minHeight: "1.5em",
         }}
       >

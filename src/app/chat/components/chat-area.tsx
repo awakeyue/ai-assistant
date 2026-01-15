@@ -2,6 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { VList, type VListHandle } from "virtua";
 import ChatMessage from "./chat-message";
 import EmptyState from "./empty-state";
 import InputBox from "./input-box";
@@ -52,7 +53,8 @@ export default function ChatArea({
   chatId: serverChatId,
 }: ChatAreaProps) {
   const { mutate } = useSWRConfig();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<VListHandle>(null);
+  const isAtBottomRef = useRef(true);
   const shouldAutoScrollRef = useRef(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   // Track touch start position for mobile scroll detection
@@ -166,40 +168,38 @@ export default function ChatArea({
     }
   };
 
-  // Simple scroll to bottom - without virtualizer
+  // Simple scroll to bottom - with virtualizer
   const scrollToBottom = useCallback(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-    container.scrollTop = container.scrollHeight;
-  }, []);
-
-  // Check if user is near bottom
-  const checkIsAtBottom = useCallback(() => {
-    const container = scrollRef.current;
-    if (!container) return true;
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    return scrollHeight - scrollTop - clientHeight <= 50;
-  }, []);
+    const hasStreamingDots = status === "submitted";
+    const totalCount = messages.length + (hasStreamingDots ? 1 : 0);
+    if (totalCount > 0) {
+      scrollRef.current?.scrollToIndex(totalCount - 1, { align: "end" });
+    }
+  }, [messages.length, status]);
 
   // Handle scroll events - only update UI state (showScrollButton)
   // shouldAutoScrollRef is controlled exclusively by user intent (wheel/click)
-  const handleScroll = useCallback(() => {
-    setShowScrollButton(!checkIsAtBottom());
-  }, [checkIsAtBottom]);
+  const handleScroll = useCallback((offset: number) => {
+    const handle = scrollRef.current;
+    if (!handle) return;
+
+    const { scrollSize, viewportSize } = handle;
+    const isAtBottom = scrollSize - offset - viewportSize <= 50;
+
+    isAtBottomRef.current = isAtBottom;
+    setShowScrollButton(!isAtBottom);
+  }, []);
 
   // Handle wheel events (desktop) - user intent controls auto-scroll
-  const handleWheel = useCallback(
-    (e: React.WheelEvent<HTMLDivElement>) => {
-      if (e.deltaY < 0) {
-        // User scrolls up -> disable auto-scroll
-        shouldAutoScrollRef.current = false;
-      } else if (e.deltaY > 0 && checkIsAtBottom()) {
-        // User scrolls down and reaches bottom -> re-enable auto-scroll
-        shouldAutoScrollRef.current = true;
-      }
-    },
-    [checkIsAtBottom],
-  );
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY < 0) {
+      // User scrolls up -> disable auto-scroll
+      shouldAutoScrollRef.current = false;
+    } else if (e.deltaY > 0 && isAtBottomRef.current) {
+      // User scrolls down and reaches bottom -> re-enable auto-scroll
+      shouldAutoScrollRef.current = true;
+    }
+  }, []);
 
   // Handle touch events (mobile) - user intent controls auto-scroll
   const handleTouchStart = useCallback(
@@ -209,44 +209,38 @@ export default function ChatArea({
     [],
   );
 
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent<HTMLDivElement>) => {
-      if (touchStartYRef.current === null) return;
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartYRef.current === null) return;
 
-      const touchCurrentY = e.touches[0].clientY;
-      const deltaY = touchStartYRef.current - touchCurrentY;
+    const touchCurrentY = e.touches[0].clientY;
+    const deltaY = touchStartYRef.current - touchCurrentY;
 
-      if (deltaY < -10) {
-        // User swipes down (scroll up) -> disable auto-scroll
-        shouldAutoScrollRef.current = false;
-      } else if (deltaY > 10 && checkIsAtBottom()) {
-        // User swipes up (scroll down) and reaches bottom -> re-enable auto-scroll
-        shouldAutoScrollRef.current = true;
-      }
-    },
-    [checkIsAtBottom],
-  );
+    if (deltaY < -10) {
+      // User swipes down (scroll up) -> disable auto-scroll
+      shouldAutoScrollRef.current = false;
+    } else if (deltaY > 10 && isAtBottomRef.current) {
+      // User swipes up (scroll down) and reaches bottom -> re-enable auto-scroll
+      shouldAutoScrollRef.current = true;
+    }
+  }, []);
 
   const handleTouchEnd = useCallback(() => {
     touchStartYRef.current = null;
   }, []);
 
-  // Auto-scroll effect - simplified without virtualizer
+  // Auto-scroll effect - simplified with virtualizer
   useEffect(() => {
     if (!shouldAutoScrollRef.current || messages.length === 0) return;
 
-    const container = scrollRef.current;
-    if (!container) return;
-
     // Use RAF to ensure DOM is ready
     const rafId = requestAnimationFrame(() => {
-      if (shouldAutoScrollRef.current && container) {
-        container.scrollTop = container.scrollHeight;
+      if (shouldAutoScrollRef.current) {
+        scrollToBottom();
       }
     });
 
     return () => cancelAnimationFrame(rafId);
-  }, [messages, status]);
+  }, [messages, status, scrollToBottom]);
 
   const handleSendMessage = async (inputValue: string, attachments: File[]) => {
     // Ensure model is selected
@@ -312,21 +306,23 @@ export default function ChatArea({
 
   return (
     <div className="relative mx-auto flex h-full w-full max-w-5xl flex-1 flex-col overflow-hidden p-2 pt-4">
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        onWheel={handleWheel}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        className="scrollbar-hide min-h-0 flex-1 overflow-y-auto"
-      >
-        {messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center">
-            <EmptyState />
-          </div>
-        ) : (
-          <div className="w-full">
+      {messages.length === 0 ? (
+        <div className="flex h-full items-center justify-center">
+          <EmptyState />
+        </div>
+      ) : (
+        <div
+          className="min-h-0 w-full flex-1"
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <VList
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="scrollbar-hide h-full w-full"
+          >
             {messages.map((message, index) => (
               <div key={message.id} className="pt-4 pb-8">
                 <ChatMessage
@@ -343,18 +339,18 @@ export default function ChatArea({
                 />
               </div>
             ))}
-          </div>
-        )}
 
-        {/* Streaming dots - shown when streaming with empty content */}
-        {status === "submitted" && (
-          <div className="pt-4 pb-8">
-            <div className={isMobile ? "pl-2" : "pl-12"}>
-              <StreamingDots />
-            </div>
-          </div>
-        )}
-      </div>
+            {/* Streaming dots - shown when streaming with empty content */}
+            {status === "submitted" && (
+              <div key="streaming-dots" className="pt-4 pb-8">
+                <div className={isMobile ? "pl-2" : "pl-12"}>
+                  <StreamingDots />
+                </div>
+              </div>
+            )}
+          </VList>
+        </div>
+      )}
 
       {error && (
         <Alert variant="destructive">
