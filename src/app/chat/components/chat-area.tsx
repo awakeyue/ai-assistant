@@ -1,15 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import {
-  useRef,
-  useEffect,
-  useLayoutEffect,
-  useState,
-  useCallback,
-  useMemo,
-} from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import ChatMessage from "./chat-message";
 import EmptyState from "./empty-state";
 import InputBox from "./input-box";
@@ -116,54 +108,6 @@ export default function ChatArea({
     },
   });
 
-  // Virtual list items: messages only (streaming indicator managed separately)
-  const virtualItems = useMemo(() => {
-    return messages.map((message, index) => ({
-      type: "message" as const,
-      message,
-      index,
-    }));
-  }, [messages]);
-
-  // Cache for measured element heights to prevent re-measurement flickering
-  const measurementCacheRef = useRef<Map<string, number>>(new Map());
-
-  // Initialize virtualizer for message list
-  // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer returns unstable references by design
-  const virtualizer = useVirtualizer({
-    count: virtualItems.length,
-    getScrollElement: () => scrollRef.current,
-    // Estimate row height - use cached value if available
-    estimateSize: useCallback(
-      (index: number) => {
-        const messageId = virtualItems[index]?.message.id;
-        if (messageId && measurementCacheRef.current.has(messageId)) {
-          return measurementCacheRef.current.get(messageId)!;
-        }
-        return 150;
-      },
-      [virtualItems],
-    ),
-    // Increase overscan to reduce edge flickering
-    overscan: 5,
-    // Key each item by message id
-    getItemKey: (index) => virtualItems[index].message.id,
-  });
-
-  // Custom measure function that caches heights
-  const measureElement = useCallback(
-    (element: HTMLElement | null) => {
-      if (!element) return;
-      const index = Number(element.dataset.index);
-      const messageId = virtualItems[index]?.message.id;
-      if (messageId && element.offsetHeight > 0) {
-        measurementCacheRef.current.set(messageId, element.offsetHeight);
-      }
-      virtualizer.measureElement(element);
-    },
-    [virtualizer, virtualItems],
-  );
-
   const handleRetry = useCallback(
     (messageId: string) => {
       regenerate({
@@ -222,13 +166,10 @@ export default function ChatArea({
     }
   };
 
-  // Simple scroll to bottom - updated for virtualizer
-  // Use scrollToOffset for more stable scrolling behavior
+  // Simple scroll to bottom - without virtualizer
   const scrollToBottom = useCallback(() => {
     const container = scrollRef.current;
     if (!container) return;
-
-    // Directly scroll the container to bottom for more reliable behavior
     container.scrollTop = container.scrollHeight;
   }, []);
 
@@ -290,32 +231,22 @@ export default function ChatArea({
     touchStartYRef.current = null;
   }, []);
 
-  // Auto-scroll effect - use useLayoutEffect for synchronous scroll
-  // This prevents flickering by ensuring scroll happens before paint
-  useLayoutEffect(() => {
-    if (!shouldAutoScrollRef.current || virtualItems.length === 0) return;
+  // Auto-scroll effect - simplified without virtualizer
+  useEffect(() => {
+    if (!shouldAutoScrollRef.current || messages.length === 0) return;
 
     const container = scrollRef.current;
     if (!container) return;
 
-    // Use double RAF to ensure virtualizer has finished measuring
-    let rafId: number;
-    const scheduleScroll = () => {
-      rafId = requestAnimationFrame(() => {
-        rafId = requestAnimationFrame(() => {
-          if (shouldAutoScrollRef.current && container) {
-            container.scrollTop = container.scrollHeight;
-          }
-        });
-      });
-    };
+    // Use RAF to ensure DOM is ready
+    const rafId = requestAnimationFrame(() => {
+      if (shouldAutoScrollRef.current && container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    });
 
-    scheduleScroll();
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, [messages, status, virtualItems.length]);
+    return () => cancelAnimationFrame(rafId);
+  }, [messages, status]);
 
   const handleSendMessage = async (inputValue: string, attachments: File[]) => {
     // Ensure model is selected
@@ -395,42 +326,27 @@ export default function ChatArea({
             <EmptyState />
           </div>
         ) : (
-          <div
-            className="relative w-full"
-            style={{ height: `${virtualizer.getTotalSize()}px` }}
-          >
-            {virtualizer.getVirtualItems().map((virtualRow) => {
-              const item = virtualItems[virtualRow.index];
-
-              return (
-                <div
-                  key={virtualRow.key}
-                  data-index={virtualRow.index}
-                  ref={measureElement}
-                  className="absolute top-0 left-0 w-full pt-4 pb-8"
-                  style={{
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                >
-                  <ChatMessage
-                    message={item.message}
-                    onRetry={handleRetry}
-                    onDelete={handleDelete}
-                    isLoading={status === "streaming"}
-                    isLatest={item.index === messages.length - 1}
-                    isStreaming={
-                      status === "streaming" &&
-                      item.index === messages.length - 1 &&
-                      item.message.role === "assistant"
-                    }
-                  />
-                </div>
-              );
-            })}
+          <div className="w-full">
+            {messages.map((message, index) => (
+              <div key={message.id} className="pt-4 pb-8">
+                <ChatMessage
+                  message={message}
+                  onRetry={handleRetry}
+                  onDelete={handleDelete}
+                  isLoading={status === "streaming"}
+                  isLatest={index === messages.length - 1}
+                  isStreaming={
+                    status === "streaming" &&
+                    index === messages.length - 1 &&
+                    message.role === "assistant"
+                  }
+                />
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Streaming dots - shown outside virtualizer when streaming with empty content */}
+        {/* Streaming dots - shown when streaming with empty content */}
         {status === "submitted" && (
           <div className="pt-4 pb-8">
             <div className={isMobile ? "pl-2" : "pl-12"}>
