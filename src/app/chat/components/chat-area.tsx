@@ -1,7 +1,14 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import {
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import ChatMessage from "./chat-message";
 import EmptyState from "./empty-state";
@@ -118,18 +125,44 @@ export default function ChatArea({
     }));
   }, [messages]);
 
+  // Cache for measured element heights to prevent re-measurement flickering
+  const measurementCacheRef = useRef<Map<string, number>>(new Map());
+
   // Initialize virtualizer for message list
   // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer returns unstable references by design
   const virtualizer = useVirtualizer({
     count: virtualItems.length,
     getScrollElement: () => scrollRef.current,
-    // Estimate row height - messages vary in height
-    estimateSize: () => 150,
-    // Enable smooth scrolling
-    overscan: 3,
+    // Estimate row height - use cached value if available
+    estimateSize: useCallback(
+      (index: number) => {
+        const messageId = virtualItems[index]?.message.id;
+        if (messageId && measurementCacheRef.current.has(messageId)) {
+          return measurementCacheRef.current.get(messageId)!;
+        }
+        return 150;
+      },
+      [virtualItems],
+    ),
+    // Increase overscan to reduce edge flickering
+    overscan: 5,
     // Key each item by message id
     getItemKey: (index) => virtualItems[index].message.id,
   });
+
+  // Custom measure function that caches heights
+  const measureElement = useCallback(
+    (element: HTMLElement | null) => {
+      if (!element) return;
+      const index = Number(element.dataset.index);
+      const messageId = virtualItems[index]?.message.id;
+      if (messageId && element.offsetHeight > 0) {
+        measurementCacheRef.current.set(messageId, element.offsetHeight);
+      }
+      virtualizer.measureElement(element);
+    },
+    [virtualizer, virtualItems],
+  );
 
   const handleRetry = useCallback(
     (messageId: string) => {
@@ -190,11 +223,14 @@ export default function ChatArea({
   };
 
   // Simple scroll to bottom - updated for virtualizer
+  // Use scrollToOffset for more stable scrolling behavior
   const scrollToBottom = useCallback(() => {
-    if (virtualItems.length > 0) {
-      virtualizer.scrollToIndex(virtualItems.length - 1, { align: "end" });
-    }
-  }, [virtualizer, virtualItems.length]);
+    const container = scrollRef.current;
+    if (!container) return;
+
+    // Directly scroll the container to bottom for more reliable behavior
+    container.scrollTop = container.scrollHeight;
+  }, []);
 
   // Check if user is near bottom
   const checkIsAtBottom = useCallback(() => {
@@ -254,15 +290,32 @@ export default function ChatArea({
     touchStartYRef.current = null;
   }, []);
 
-  // Auto-scroll effect - updated to use virtualizer
-  useEffect(() => {
-    if (shouldAutoScrollRef.current && virtualItems.length > 0) {
-      // Use requestAnimationFrame to ensure DOM is ready
-      requestAnimationFrame(() => {
-        virtualizer.scrollToIndex(virtualItems.length - 1, { align: "end" });
+  // Auto-scroll effect - use useLayoutEffect for synchronous scroll
+  // This prevents flickering by ensuring scroll happens before paint
+  useLayoutEffect(() => {
+    if (!shouldAutoScrollRef.current || virtualItems.length === 0) return;
+
+    const container = scrollRef.current;
+    if (!container) return;
+
+    // Use double RAF to ensure virtualizer has finished measuring
+    let rafId: number;
+    const scheduleScroll = () => {
+      rafId = requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(() => {
+          if (shouldAutoScrollRef.current && container) {
+            container.scrollTop = container.scrollHeight;
+          }
+        });
       });
-    }
-  }, [messages, status, virtualizer, virtualItems.length]);
+    };
+
+    scheduleScroll();
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [messages, status, virtualItems.length]);
 
   const handleSendMessage = async (inputValue: string, attachments: File[]) => {
     // Ensure model is selected
@@ -353,7 +406,7 @@ export default function ChatArea({
                 <div
                   key={virtualRow.key}
                   data-index={virtualRow.index}
-                  ref={virtualizer.measureElement}
+                  ref={measureElement}
                   className="absolute top-0 left-0 w-full pt-4 pb-8"
                   style={{
                     transform: `translateY(${virtualRow.start}px)`,
