@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ChatStatus } from "ai";
-import { ArrowUp, Square, X } from "lucide-react";
+import { ArrowUp, X } from "lucide-react";
 import {
   useRef,
   useState,
@@ -277,11 +277,11 @@ export default function InputBox({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  size="sm"
-                  variant="destructive"
+                  size="icon"
+                  variant="outline"
                   onClick={() => stop && stop()}
                 >
-                  <Square size={12} />
+                  <span className="bg-primary inline-flex h-3 w-3 rounded-xs"></span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">取消</TooltipContent>
