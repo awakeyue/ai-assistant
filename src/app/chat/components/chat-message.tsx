@@ -212,7 +212,7 @@ function ReasoningBlock({
   if (!text) return null;
 
   return (
-    <div className="my-2 rounded-lg border border-amber-100 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/10">
+    <div className="block-fade-in my-2 rounded-lg border border-amber-100 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/10">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center gap-2 rounded-t-lg px-3 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-100/50"
@@ -257,7 +257,7 @@ const FileBlock = memo(({ filePart }: { filePart: FileUIPart }) => {
 
   if (isImage) {
     return (
-      <div className="group relative mt-2 mb-4 overflow-hidden rounded-lg border bg-gray-50 shadow-sm transition-all hover:shadow-md">
+      <div className="group block-fade-in relative mt-2 mb-4 overflow-hidden rounded-lg border bg-gray-50 shadow-sm transition-all hover:shadow-md">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -287,7 +287,7 @@ const FileBlock = memo(({ filePart }: { filePart: FileUIPart }) => {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex w-fit items-center gap-3 rounded-lg border bg-white p-3 pr-6 text-sm shadow-sm transition-all hover:border-blue-200 hover:bg-gray-50 hover:shadow-md"
+      className="group block-fade-in flex w-fit items-center gap-3 rounded-lg border bg-white p-3 pr-6 text-sm shadow-sm transition-all hover:border-blue-200 hover:bg-gray-50 hover:shadow-md"
     >
       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 transition-colors group-hover:bg-white">
         {getIcon()}
@@ -352,6 +352,14 @@ if (typeof document !== "undefined") {
         border-radius: 1px;
         animation: streamingBlink 1s steps(1) infinite;
       }
+      
+      @keyframes blockFadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .block-fade-in {
+        animation: blockFadeIn 0.4s ease-out forwards;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -381,13 +389,15 @@ const markdownComponents: Components = {
     }
 
     return (
-      <CodeBlock language={match ? match[1] : "text"} value={codeString} />
+      <div className="block-fade-in">
+        <CodeBlock language={match ? match[1] : "text"} value={codeString} />
+      </div>
     );
   },
 
   // 表格处理
   table: ({ children }) => (
-    <div className="scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent dark:scrollbar-thumb-gray-500 my-4 w-full overflow-x-auto overflow-y-hidden rounded-lg border border-gray-200 dark:border-gray-600">
+    <div className="scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent dark:scrollbar-thumb-gray-500 block-fade-in my-4 w-full overflow-x-auto overflow-y-hidden rounded-lg border border-gray-200 dark:border-gray-600">
       <table className="w-full min-w-full table-auto border-collapse text-left text-sm">
         {children}
       </table>
@@ -424,31 +434,33 @@ const markdownComponents: Components = {
     </td>
   ),
   // 基础排版
-  p: ({ children }) => <p className="mb-4 leading-7 last:mb-0">{children}</p>,
+  p: ({ children }) => (
+    <p className="block-fade-in mb-4 leading-7 last:mb-0">{children}</p>
+  ),
   ul: ({ children }) => (
     <ul className="mb-4 list-disc space-y-2 pl-6">{children}</ul>
   ),
   ol: ({ children }) => (
     <ol className="mb-4 list-decimal space-y-2 pl-6">{children}</ol>
   ),
-  li: ({ children }) => <li className="pl-1">{children}</li>,
+  li: ({ children }) => <li className="block-fade-in pl-1">{children}</li>,
   h1: ({ children }) => (
-    <h1 className="mt-6 mb-4 border-b pb-2 text-2xl font-bold tracking-tight text-gray-900">
+    <h1 className="block-fade-in mt-6 mb-4 border-b pb-2 text-2xl font-bold tracking-tight text-gray-900">
       {children}
     </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mt-5 mb-3 text-xl font-semibold tracking-tight text-gray-800">
+    <h2 className="block-fade-in mt-5 mb-3 text-xl font-semibold tracking-tight text-gray-800">
       {children}
     </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mt-4 mb-2 text-lg font-semibold text-gray-800">
+    <h3 className="block-fade-in mt-4 mb-2 text-lg font-semibold text-gray-800">
       {children}
     </h3>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="my-4 border-l-4 border-gray-300 bg-gray-50 py-2 pl-4 text-gray-600 italic">
+    <blockquote className="block-fade-in my-4 border-l-4 border-gray-300 bg-gray-50 py-2 pl-4 text-gray-600 italic">
       {children}
     </blockquote>
   ),

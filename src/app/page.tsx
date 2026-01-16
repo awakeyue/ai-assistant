@@ -79,22 +79,6 @@ export default function Home() {
                 </Link>
               </Button>
             </div>
-
-            {/* Model Icons */}
-            <div className="mt-12 flex items-center gap-3">
-              <span className="text-muted-foreground text-sm">支持模型：</span>
-              <div className="flex items-center gap-2">
-                {["OpenAI", "Claude", "Gemini", "DeepSeek"].map((model) => (
-                  <div
-                    key={model}
-                    className="bg-muted text-muted-foreground rounded-md px-3 py-1 text-xs font-medium"
-                  >
-                    {model}
-                  </div>
-                ))}
-                <span className="text-muted-foreground text-xs">更多...</span>
-              </div>
-            </div>
           </div>
         </section>
 
