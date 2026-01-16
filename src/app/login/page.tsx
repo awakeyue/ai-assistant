@@ -12,14 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Github,
-  Mail,
-  Loader2,
-  CheckCircle2,
-  MailOpen,
-  RefreshCw,
-} from "lucide-react";
+import { Mail, Loader2, CheckCircle2, MailOpen, RefreshCw } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
+import { IoLogoGithub } from "react-icons/io";
 import { signUpWithEmail, signInWithEmail } from "@/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -27,7 +22,8 @@ import { toast } from "sonner";
 function LoginPageContent() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
@@ -128,7 +124,7 @@ function LoginPageContent() {
   };
 
   const handleGithubLogin = async () => {
-    setOauthLoading(true);
+    setGithubLoading(true);
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
@@ -140,11 +136,32 @@ function LoginPageContent() {
 
       if (error) {
         toast.error(error.message);
-        setOauthLoading(false);
+        setGithubLoading(false);
       }
     } catch (error: any) {
       toast.error(error?.message || "GitHub 登录失败");
-      setOauthLoading(false);
+      setGithubLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/login/callback`,
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setGoogleLoading(false);
+      }
+    } catch (error: any) {
+      toast.error(error?.message || "Google 登录失败");
+      setGoogleLoading(false);
     }
   };
 
@@ -256,25 +273,45 @@ function LoginPageContent() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* GitHub login button */}
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleGithubLogin}
-            disabled={oauthLoading || loading}
-          >
-            {oauthLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                正在跳转...
-              </>
-            ) : (
-              <>
-                <Github className="mr-2 h-4 w-4" />
-                使用 GitHub 登录
-              </>
-            )}
-          </Button>
+          {/* OAuth login buttons */}
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleGoogleLogin}
+              disabled={googleLoading || githubLoading || loading}
+            >
+              {googleLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  正在跳转...
+                </>
+              ) : (
+                <>
+                  <FcGoogle className="mr-2 h-4 w-4" />
+                  使用 Google 登录
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleGithubLogin}
+              disabled={githubLoading || googleLoading || loading}
+            >
+              {githubLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  正在跳转...
+                </>
+              ) : (
+                <>
+                  <IoLogoGithub className="mr-2 h-4 w-4" />
+                  使用 GitHub 登录
+                </>
+              )}
+            </Button>
+          </div>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -297,7 +334,7 @@ function LoginPageContent() {
                   name="name"
                   type="text"
                   placeholder="请输入用户名"
-                  disabled={loading || oauthLoading}
+                  disabled={loading || githubLoading || googleLoading}
                 />
               </div>
             )}
@@ -309,7 +346,7 @@ function LoginPageContent() {
                 type="email"
                 placeholder="请输入邮箱"
                 required
-                disabled={loading || oauthLoading}
+                disabled={loading || githubLoading || googleLoading}
               />
             </div>
             <div className="space-y-2">
@@ -321,13 +358,13 @@ function LoginPageContent() {
                 placeholder="请输入密码"
                 required
                 minLength={6}
-                disabled={loading || oauthLoading}
+                disabled={loading || githubLoading || googleLoading}
               />
             </div>
             <Button
               type="submit"
               className="w-full"
-              disabled={loading || oauthLoading}
+              disabled={loading || githubLoading || googleLoading}
             >
               {loading ? (
                 <>
@@ -351,7 +388,7 @@ function LoginPageContent() {
               type="button"
               onClick={() => setIsLogin(!isLogin)}
               className="text-primary ml-1 font-medium hover:underline disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={loading || oauthLoading}
+              disabled={loading || githubLoading || googleLoading}
             >
               {isLogin ? "立即注册" : "去登录"}
             </button>
