@@ -54,6 +54,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: model(modelConfig.modelId),
+    system: modelConfig.systemPrompt || undefined,
     messages: await convertToModelMessages(messages),
   });
 
