@@ -80,7 +80,10 @@ function LoginPageContent() {
     } catch (error: any) {
       toast.error(error?.message || "操作失败");
     } finally {
-      setLoading(false);
+      // 优化，导航还没调整，loading已经结束
+      setTimeout(() => {
+        setLoading(false);
+      }, 2000);
     }
   };
 
