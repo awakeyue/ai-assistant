@@ -46,10 +46,12 @@ export async function POST(req: Request) {
     );
   }
 
+  const providerName = "doubao"; // 只是一个标识，可随意填写，但是一定不能包含特殊字符，比如"."，否则会导致透传参数失败
+
   const model = createOpenAICompatible({
     baseURL: modelConfig.baseURL,
     apiKey: apiKey,
-    name: modelConfig.name,
+    name: providerName,
   });
 
   // Parse extra options from model config - passthrough all fields directly
@@ -63,7 +65,7 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(messages),
     // Passthrough all extra options directly to streamText
     providerOptions: {
-      [modelConfig.name]: extraOptions,
+      [providerName]: extraOptions,
     },
   });
 
