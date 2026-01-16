@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import { encryptApiKey, maskApiKey, decryptApiKey } from "@/lib/crypto";
 import { UserModelFormData } from "@/types/chat";
@@ -65,17 +66,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const body: Partial<UserModelFormData> = await req.json();
 
     // Build update data
-    const updateData: {
-      name?: string;
-      modelId?: string;
-      baseURL?: string;
-      apiKey?: string;
-      description?: string | null;
-      logoUrl?: string | null;
-      systemPrompt?: string | null;
-      isPublic?: boolean;
-      supportsVision?: boolean;
-    } = {};
+    const updateData: Prisma.UserModelUpdateInput = {};
 
     if (body.name !== undefined) updateData.name = body.name;
     if (body.modelId !== undefined) updateData.modelId = body.modelId;
@@ -88,6 +79,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (body.isPublic !== undefined) updateData.isPublic = body.isPublic;
     if (body.supportsVision !== undefined)
       updateData.supportsVision = body.supportsVision;
+    if (body.extraOptions !== undefined)
+      updateData.extraOptions = body.extraOptions
+        ? (body.extraOptions as Prisma.InputJsonValue)
+        : Prisma.JsonNull;
 
     // Only update API key if a new one is provided (not masked)
     if (body.apiKey && !body.apiKey.includes("****")) {

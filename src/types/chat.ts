@@ -1,5 +1,14 @@
 import { UIMessage } from "ai";
 
+// Extra options for vendor-specific parameters
+// This is a passthrough field - users can add any key-value pairs
+// Common examples:
+// - OpenAI/DeepSeek: { "reasoningEffort": "high", "maxTokens": 4096 }
+// - Anthropic: { "thinking": { "type": "enabled", "budgetTokens": 10000 } }
+// - Google: { "thinkingConfig": { "thinkingBudget": 10000 } }
+
+export type ModelExtraOptions = Record<string, any>;
+
 export interface Chatdata {
   id: string;
   title: string;
@@ -35,6 +44,9 @@ export interface UserModelConfig {
   // Model Capabilities - 模型能力开关
   supportsVision: boolean; // Vision model support (image input)
 
+  // Extra Options - 透传字段，用于供应商特定参数
+  extraOptions?: ModelExtraOptions;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +64,9 @@ export interface UserModelFormData {
 
   // Model Capabilities
   supportsVision?: boolean;
+
+  // Extra Options
+  extraOptions?: ModelExtraOptions;
 }
 
 // Chat capabilities configuration for runtime

@@ -80,6 +80,9 @@ model UserModel {
   // Model Capabilities - 模型能力开关
   supportsVision        Boolean @default(false) @map("supports_vision") // Vision model support (image input)
   
+  // Extra Options - 透传字段，用于供应商特定参数（如深度思考、最大回复token等）
+  extraOptions          Json?   @map("extra_options")
+  
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

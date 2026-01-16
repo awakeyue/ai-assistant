@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import { encryptApiKey, maskApiKey } from "@/lib/crypto";
 import { UserModelFormData } from "@/types/chat";
@@ -104,6 +105,9 @@ export async function POST(req: NextRequest) {
         systemPrompt: body.systemPrompt || null,
         isDefault: isFirstModel,
         supportsVision: body.supportsVision ?? false,
+        extraOptions: body.extraOptions
+          ? (body.extraOptions as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
       },
     });
 

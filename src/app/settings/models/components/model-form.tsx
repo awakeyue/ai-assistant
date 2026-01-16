@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { JsonEditor } from "@/components/custom/json-editor";
 import { toast } from "sonner";
 import {
   Eye,
@@ -22,10 +23,20 @@ import {
   UserLock,
   Sparkles,
   Copy,
+  Settings,
 } from "lucide-react";
 import Image from "next/image";
 import { Switch } from "@/components/ui/switch";
 import { useUserStore } from "@/store/user";
+
+// JSON example templates for different providers
+const EXTRA_OPTIONS_EXAMPLES = `// Examples for different providers:
+// 禁用深度思考
+{
+  "thinking":{
+    "type":"disabled"
+  }
+}`;
 
 interface ModelFormProps {
   model?: UserModelConfig;
@@ -56,11 +67,14 @@ export default function ModelForm({
     systemPrompt: "",
     isPublic: false,
     supportsVision: false,
+    extraOptions: {},
   });
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState<Partial<UserModelFormData>>({});
+  const [extraOptionsJson, setExtraOptionsJson] = useState<string>("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
 
   useEffect(() => {
     if (model) {
@@ -74,7 +88,15 @@ export default function ModelForm({
         systemPrompt: model.systemPrompt || "",
         isPublic: model.isPublic,
         supportsVision: model.supportsVision ?? false,
+        extraOptions: model.extraOptions || {},
       });
+      // Initialize JSON editor with formatted extraOptions
+      const opts = model.extraOptions;
+      if (opts && Object.keys(opts).length > 0) {
+        setExtraOptionsJson(JSON.stringify(opts, null, 2));
+      } else {
+        setExtraOptionsJson("");
+      }
     } else {
       setFormData({
         name: "",
@@ -86,8 +108,11 @@ export default function ModelForm({
         systemPrompt: "",
         isPublic: false,
         supportsVision: false,
+        extraOptions: {},
       });
+      setExtraOptionsJson("");
     }
+    setJsonError(null);
   }, [model]);
 
   const validateForm = (): boolean => {
@@ -219,6 +244,34 @@ export default function ModelForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof UserModelFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  // Handle JSON editor changes
+  const handleExtraOptionsJsonChange = (value: string) => {
+    setExtraOptionsJson(value);
+    setJsonError(null);
+
+    // Empty string is valid (means no extra options)
+    if (!value.trim()) {
+      setFormData((prev) => ({ ...prev, extraOptions: {} }));
+      return;
+    }
+
+    // Try to parse JSON
+    try {
+      const parsed = JSON.parse(value);
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        Array.isArray(parsed)
+      ) {
+        setJsonError("必须是一个 JSON 对象");
+        return;
+      }
+      setFormData((prev) => ({ ...prev, extraOptions: parsed }));
+    } catch {
+      setJsonError("JSON 格式无效");
     }
   };
 
@@ -513,6 +566,31 @@ export default function ModelForm({
               disabled={isSubmitting}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Extra Options - JSON Editor */}
+      <div className="space-y-4">
+        <Label className="flex items-center gap-2 text-sm font-medium">
+          <Settings className="text-muted-foreground h-4 w-4" />
+          高级参数
+          <span className="text-muted-foreground text-xs font-normal">
+            （JSON 格式，供应商特定参数）
+          </span>
+        </Label>
+        <div className="space-y-2">
+          <JsonEditor
+            value={extraOptionsJson}
+            onChange={handleExtraOptionsJsonChange}
+            placeholder={EXTRA_OPTIONS_EXAMPLES}
+            disabled={isSubmitting}
+            error={jsonError}
+            minHeight="100px"
+          />
+          <p className="text-muted-foreground text-xs">
+            输入 JSON 格式的配置参数，留空则使用默认值。这些参数会直接透传给 AI
+            SDK。
+          </p>
         </div>
       </div>
 

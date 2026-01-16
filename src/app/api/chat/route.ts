@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { decryptApiKey } from "@/lib/crypto";
-import { ChatCapabilities } from "@/types/chat";
+import { ChatCapabilities, ModelExtraOptions } from "@/types/chat";
 
 export async function POST(req: Request) {
   const {
@@ -52,10 +52,19 @@ export async function POST(req: Request) {
     name: modelConfig.name,
   });
 
+  // Parse extra options from model config - passthrough all fields directly
+  const extraOptions = (modelConfig.extraOptions as ModelExtraOptions) || {};
+
+  // Build streamText options - spread all extra options directly
+  // This allows users to pass any vendor-specific parameters
   const result = streamText({
     model: model(modelConfig.modelId),
     system: modelConfig.systemPrompt || undefined,
     messages: await convertToModelMessages(messages),
+    // Passthrough all extra options directly to streamText
+    providerOptions: {
+      ...extraOptions,
+    },
   });
 
   return result.toUIMessageStreamResponse();
