@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(messages),
     // Passthrough all extra options directly to streamText
     providerOptions: {
-      ...extraOptions,
+      [modelConfig.name]: extraOptions,
     },
   });
 
