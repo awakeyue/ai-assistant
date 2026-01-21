@@ -12,11 +12,10 @@ import { DefaultChatTransport } from "ai";
 import { AlertCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollToBottomButton } from "@/components/custom/scroll-to-bottom-button";
-import { convertFileToUIPart } from "@/lib/utils";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { saveChatMessages, createChat, updateChatTitle } from "@/actions/chat";
 import { useSWRConfig } from "swr";
-import type { UIMessage } from "ai";
+import type { UIMessage, FileUIPart } from "ai";
 import { nanoid } from "nanoid";
 import { useUIStore } from "@/store/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -242,7 +241,10 @@ export default function ChatArea({
     return () => cancelAnimationFrame(rafId);
   }, [messages, status, scrollToBottom]);
 
-  const handleSendMessage = async (inputValue: string, attachments: File[]) => {
+  const handleSendMessage = async (
+    inputValue: string,
+    attachments: FileUIPart[],
+  ) => {
     // Ensure model is selected
     if (!currentModelId) {
       return;
@@ -251,15 +253,13 @@ export default function ChatArea({
     shouldAutoScrollRef.current = true;
     setShowScrollButton(false);
 
-    const fileUIParts = await Promise.all(attachments.map(convertFileToUIPart));
-
     // Get current capabilities state
     const capabilities = useChatCapabilitiesStore.getState().getCapabilities();
 
     sendMessage(
       {
         text: inputValue,
-        files: fileUIParts,
+        files: attachments.length > 0 ? attachments : undefined,
       },
       {
         body: {

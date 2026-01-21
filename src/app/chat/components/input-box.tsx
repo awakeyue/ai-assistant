@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ChatStatus } from "ai";
-import { ArrowUp, X } from "lucide-react";
+import { ChatStatus, FileUIPart } from "ai";
+import { ArrowUp, X, Loader2 } from "lucide-react";
 import {
   useRef,
   useState,
@@ -25,18 +25,35 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useModelStore } from "@/store/chat";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, uploadFiles } from "@/lib/utils";
 import { toast } from "sonner";
 import { UserModelConfig } from "@/types/chat";
 import InputAttachments, { AttachmentType } from "./input-attachments";
 
+// Represents a file being uploaded or already uploaded
+interface UploadingFile {
+  id: string; // Unique identifier for React key and tracking
+  file: File; // Original file for preview
+  status: "uploading" | "success" | "error";
+  // After successful upload
+  url?: string;
+  mediaType?: string;
+  filename?: string;
+  // Error message if failed
+  error?: string;
+}
+
 interface InputBoxProps {
-  onSubmit: (text: string, attachments: File[]) => void;
+  onSubmit: (text: string, attachments: FileUIPart[]) => void;
   status: ChatStatus;
   stop?: () => void;
   currentChatId?: string | null;
   disabled?: boolean;
 }
+
+// Generate unique ID for each file upload
+let fileIdCounter = 0;
+const generateFileId = () => `file-${Date.now()}-${++fileIdCounter}`;
 
 export default function InputBox({
   onSubmit,
@@ -46,7 +63,7 @@ export default function InputBox({
   disabled: externalDisabled = false,
 }: InputBoxProps) {
   const [input, setInput] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -63,7 +80,9 @@ export default function InputBox({
   const currentModel =
     modelList.find((model) => model.id === currentModelId) || modelList[0];
 
-  const disabled = status !== "ready" || externalDisabled;
+  // Check if any files are still uploading
+  const isUploading = uploadingFiles.some((f) => f.status === "uploading");
+  const disabled = status !== "ready" || externalDisabled || isUploading;
 
   // Check if model supports vision for drag/paste
   const supportsVision = currentModel?.supportsVision ?? false;
@@ -76,15 +95,67 @@ export default function InputBox({
     }
   }, [currentChatId]);
 
+  // Upload files immediately when selected/pasted/dropped
+  const handleUploadFiles = useCallback(async (files: File[]) => {
+    if (files.length === 0) return;
+
+    // Create uploading file entries with unique IDs
+    const newUploadingFiles: UploadingFile[] = files.map((file) => ({
+      id: generateFileId(),
+      file,
+      status: "uploading" as const,
+    }));
+
+    // Add to state immediately to show preview with loading
+    setUploadingFiles((prev) => [...prev, ...newUploadingFiles]);
+
+    // Upload files in parallel
+    const uploadPromises = newUploadingFiles.map(async (uploadingFile) => {
+      try {
+        const [uploaded] = await uploadFiles([uploadingFile.file]);
+        // Update state with success
+        setUploadingFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadingFile.id
+              ? {
+                  ...f,
+                  status: "success" as const,
+                  url: uploaded.url,
+                  mediaType: uploaded.mediaType,
+                  filename: uploaded.filename,
+                }
+              : f,
+          ),
+        );
+      } catch (error) {
+        // Update state with error
+        setUploadingFiles((prev) =>
+          prev.map((f) =>
+            f.id === uploadingFile.id
+              ? {
+                  ...f,
+                  status: "error" as const,
+                  error: error instanceof Error ? error.message : "上传失败",
+                }
+              : f,
+          ),
+        );
+        toast.error(`图片 ${uploadingFile.file.name} 上传失败`);
+      }
+    });
+
+    await Promise.all(uploadPromises);
+  }, []);
+
   // Handle files selected from InputAttachments component
   const handleFilesSelect = useCallback(
     (selectedFiles: File[], type: AttachmentType) => {
       if (type === "image") {
-        setFiles((prev) => [...prev, ...selectedFiles]);
+        handleUploadFiles(selectedFiles);
       }
       // Future: handle other file types
     },
-    [],
+    [handleUploadFiles],
   );
 
   // Handle paste - only allow images if model supports vision
@@ -104,10 +175,10 @@ export default function InputBox({
       }
 
       if (pastedFiles.length > 0) {
-        setFiles((prev) => [...prev, ...pastedFiles]);
+        handleUploadFiles(pastedFiles);
       }
     },
-    [supportsVision],
+    [supportsVision, handleUploadFiles],
   );
 
   // Handle drag over - only allow if model supports vision
@@ -148,28 +219,41 @@ export default function InputBox({
       }
 
       if (droppedFiles.length > 0) {
-        setFiles((prev) => [...prev, ...droppedFiles]);
+        handleUploadFiles(droppedFiles);
       }
     },
-    [supportsVision],
+    [supportsVision, handleUploadFiles],
   );
 
-  const removeFile = useCallback((indexToRemove: number) => {
-    setFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+  const removeFile = useCallback((idToRemove: string) => {
+    setUploadingFiles((prev) => prev.filter((f) => f.id !== idToRemove));
   }, []);
 
   const handleSend = () => {
-    if (!input.trim() && files.length === 0) return;
+    // Get successfully uploaded files
+    const successfulFiles = uploadingFiles.filter(
+      (f) => f.status === "success",
+    );
+
+    if (!input.trim() && successfulFiles.length === 0) return;
 
     if (!currentModelId || modelList.length === 0) {
       toast.error("请先配置模型");
       return;
     }
 
+    // Convert to FileUIPart format
+    const fileUIParts: FileUIPart[] = successfulFiles.map((f) => ({
+      type: "file" as const,
+      mediaType: f.mediaType!,
+      url: f.url!,
+      filename: f.filename,
+    }));
+
     const message = input.trim();
-    onSubmit(message, files);
+    onSubmit(message, fileUIParts);
     setInput("");
-    setFiles([]);
+    setUploadingFiles([]);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -189,7 +273,7 @@ export default function InputBox({
           isDragging ? "border-primary ring-primary ring-2" : ""
         }`}
       >
-        <FilesPreview files={files} removeFile={removeFile} />
+        <FilesPreview files={uploadingFiles} removeFile={removeFile} />
 
         <textarea
           ref={inputRef}
@@ -201,11 +285,11 @@ export default function InputBox({
           placeholder={
             externalDisabled
               ? "加载中..."
-              : files.length > 0
+              : uploadingFiles.length > 0
                 ? "添加描述..."
                 : "请输入内容，按 Enter 发送..."
           }
-          rows={files.length > 0 ? 1 : 2}
+          rows={uploadingFiles.length > 0 ? 1 : 2}
           className={cn(
             "text-foreground placeholder:text-muted-foreground max-h-32 w-full resize-none bg-transparent font-sans focus:outline-none",
             externalDisabled && "cursor-not-allowed opacity-50",
@@ -291,14 +375,25 @@ export default function InputBox({
               <TooltipTrigger asChild>
                 <Button
                   onClick={handleSend}
-                  disabled={disabled || (!input.trim() && files.length === 0)}
+                  disabled={
+                    disabled ||
+                    (!input.trim() &&
+                      uploadingFiles.filter((f) => f.status === "success")
+                        .length === 0)
+                  }
                   size="sm"
                   className="disabled:bg-white-400 dark:bg-black-400 rounded-lg px-3 py-2 disabled:text-white"
                 >
-                  <ArrowUp size={20} />
+                  {isUploading ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    <ArrowUp size={20} />
+                  )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">发送</TooltipContent>
+              <TooltipContent side="top">
+                {isUploading ? "上传中..." : "发送"}
+              </TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -307,34 +402,62 @@ export default function InputBox({
   );
 }
 
-const FilesPreview = memo(function ({
+const FilesPreview = memo(function FilesPreview({
   files,
   removeFile,
 }: {
-  files: File[];
-  removeFile: (indexToRemove: number) => void;
+  files: UploadingFile[];
+  removeFile: (id: string) => void;
 }) {
   return (
     files.length > 0 && (
       <div className="flex flex-wrap gap-2 pb-2">
-        {files.map((file, index) => (
+        {files.map((uploadingFile) => (
           <div
-            key={index}
-            className="group bg-muted relative size-16 overflow-hidden rounded-md border"
+            key={uploadingFile.id}
+            className={cn(
+              "group bg-muted relative size-16 overflow-hidden rounded-md border",
+              uploadingFile.status === "error" && "border-destructive",
+            )}
           >
             <Tooltip>
               <TooltipTrigger asChild>
                 <Image
-                  src={URL.createObjectURL(file)}
+                  src={URL.createObjectURL(uploadingFile.file)}
                   alt="preview"
                   fill
-                  className="size-full object-cover"
+                  className={cn(
+                    "size-full object-cover transition-opacity",
+                    uploadingFile.status === "uploading" && "opacity-50",
+                    uploadingFile.status === "error" && "opacity-30",
+                  )}
                 />
               </TooltipTrigger>
-              <TooltipContent side="top">{file.name}</TooltipContent>
+              <TooltipContent side="top">
+                {uploadingFile.status === "error"
+                  ? `上传失败: ${uploadingFile.error}`
+                  : uploadingFile.file.name}
+              </TooltipContent>
             </Tooltip>
+
+            {/* Loading overlay */}
+            {uploadingFile.status === "uploading" && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                <Loader2 className="h-5 w-5 animate-spin text-white" />
+              </div>
+            )}
+
+            {/* Error indicator */}
+            {uploadingFile.status === "error" && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-destructive text-xs font-medium">
+                  失败
+                </span>
+              </div>
+            )}
+
             <button
-              onClick={() => removeFile(index)}
+              onClick={() => removeFile(uploadingFile.id)}
               className="absolute top-0.5 right-0.5 rounded-full bg-black/50 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
             >
               <X size={12} />
@@ -347,7 +470,7 @@ const FilesPreview = memo(function ({
 });
 FilesPreview.displayName = "FilesPreview";
 
-const ModelLogo = memo(function ({
+const ModelLogo = memo(function ModelLogo({
   model,
   size = "sm",
 }: {

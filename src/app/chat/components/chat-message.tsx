@@ -19,6 +19,7 @@ import {
   FileCode,
   RotateCw, // 重试图标
   Trash2, // 删除图标
+  Image as ImageIcon, // 图片占位图标
 } from "lucide-react";
 import { SyntaxHighlighter } from "@/components/custom/syntax-highlighter";
 import {
@@ -242,6 +243,8 @@ function ReasoningBlock({
 const FileBlock = memo(({ filePart }: { filePart: FileUIPart }) => {
   const { filename, mediaType, url } = filePart;
   const isImage = mediaType?.startsWith("image/");
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const getIcon = () => {
     if (mediaType?.includes("pdf"))
@@ -257,19 +260,42 @@ const FileBlock = memo(({ filePart }: { filePart: FileUIPart }) => {
 
   if (isImage) {
     return (
-      <div className="group block-fade-in relative mt-2 mb-4 overflow-hidden rounded-lg border bg-gray-50 shadow-sm transition-all hover:shadow-md">
+      <div className="group block-fade-in relative mt-2 mb-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm transition-all hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="relative mx-auto max-h-80 w-full max-w-full">
+              {/* Fixed size container for consistent image display */}
+              <div className="relative flex h-48 w-48 items-center justify-center overflow-hidden sm:h-56 sm:w-56">
+                {/* Loading placeholder */}
+                {!imageLoaded && !imageError && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                    <div className="flex flex-col items-center gap-2 text-gray-400">
+                      <ImageIcon size={32} className="animate-pulse" />
+                      <span className="text-xs">加载中...</span>
+                    </div>
+                  </div>
+                )}
+                {/* Error placeholder */}
+                {imageError && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                    <div className="flex flex-col items-center gap-2 text-gray-400">
+                      <ImageIcon size={32} />
+                      <span className="text-xs">图片加载失败</span>
+                    </div>
+                  </div>
+                )}
                 <Image
                   src={url}
                   alt={filename || "Uploaded image"}
-                  width={800}
-                  height={600}
-                  className="mx-auto h-auto max-h-80 w-auto object-contain"
+                  fill
+                  className={cn(
+                    "object-cover transition-opacity duration-300",
+                    imageLoaded ? "opacity-100" : "opacity-0",
+                  )}
                   loading="lazy"
                   unoptimized
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
                 />
               </div>
             </TooltipTrigger>

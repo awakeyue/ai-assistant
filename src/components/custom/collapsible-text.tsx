@@ -11,7 +11,7 @@ export const CollapsibleText = ({
   const [canCollapse, setCanCollapse] = useState(false); // 标记内容是否足够长，需要折叠功能
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const MAX_HEIGHT = 150; // 阈值高度
+  const MAX_HEIGHT = 300; // 阈值高度
 
   useEffect(() => {
     // 确保 DOM 渲染后再检测高度
@@ -39,9 +39,11 @@ export const CollapsibleText = ({
         ref={contentRef}
         className={cn(
           "relative overflow-hidden transition-all duration-300 ease-in-out",
-          // 只有当检测到需要折叠(canCollapse) 且 当前未展开(!isExpanded) 时，才限制高度
-          canCollapse && !isExpanded ? "max-h-[150px]" : "max-h-none",
         )}
+        // 只有当检测到需要折叠(canCollapse) 且 当前未展开(!isExpanded) 时，才限制高度
+        style={{
+          maxHeight: canCollapse && !isExpanded ? MAX_HEIGHT + "px" : "none",
+        }}
       >
         {children}
 
