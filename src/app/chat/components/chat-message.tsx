@@ -61,6 +61,10 @@ const ChatMessage = memo(
       .map((part) => (part as TextUIPart).text)
       .join("");
 
+    const isToolType = message.parts.some((part) =>
+      part.type.startsWith("tool-"),
+    );
+
     // 复制功能
     const [isCopied, setIsCopied] = useState(false);
     const handleCopy = useCallback(async () => {
@@ -72,8 +76,6 @@ const ChatMessage = memo(
         console.error("Failed to copy:", err);
       }
     }, [textContent]);
-
-    console.log("Rendering ChatMessage:", message);
 
     const messageContent = (
       <div className="flex flex-col gap-3">
@@ -131,10 +133,10 @@ const ChatMessage = memo(
         )}
         <div
           className={cn(
-            "relative max-w-full px-3 py-2 text-sm shadow-sm transition-all md:max-w-3xl lg:max-w-4xl",
+            "relative px-3 py-2 text-sm shadow-sm transition-all md:max-w-3xl lg:max-w-4xl",
             isUser
-              ? "bg-primary text-primary-foreground group rounded-2xl rounded-tr-sm"
-              : "rounded-2xl rounded-tl-sm border border-gray-100 bg-white text-gray-800 md:min-w-xl lg:min-w-3xl dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100",
+              ? "bg-primary text-primary-foreground group max-w-full rounded-2xl rounded-tr-sm"
+              : "w-full rounded-2xl rounded-tl-sm border border-gray-100 bg-white text-gray-800 md:min-w-xl lg:min-w-3xl dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100",
           )}
         >
           {/* 内容区域 */}
@@ -145,7 +147,7 @@ const ChatMessage = memo(
           )}
 
           {/* 底部操作栏 */}
-          {!isLoading && (
+          {!isLoading && !isToolType && (
             <div
               className={cn(
                 "absolute -bottom-7 flex items-center gap-2 text-gray-500 opacity-100 transition-opacity dark:text-gray-300",
@@ -350,7 +352,7 @@ const ToolGomokuGame = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
 
   if (state === "output-available") {
     return (
-      <div className="block-fade-in my-3">
+      <div className="block-fade-in my-3 flex w-full justify-center">
         <Gomoku />
       </div>
     );

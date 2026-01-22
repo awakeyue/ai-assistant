@@ -1,6 +1,11 @@
 import { MessageSquare, Zap } from "lucide-react";
+import { ReactNode } from "react";
 
-export default function ChatEmptyState2() {
+interface EmptyStateProps {
+  children?: ReactNode;
+}
+
+export default function ChatEmptyState2({ children }: EmptyStateProps) {
   return (
     <div className="flex h-full w-full items-center justify-center px-4">
       <div className="flex max-w-lg flex-col items-center text-center">
@@ -15,9 +20,10 @@ export default function ChatEmptyState2() {
         <h2 className="text-foreground mb-2 text-2xl font-bold text-balance">
           有什么可以帮你？
         </h2>
-        <p className="text-muted-foreground text-sm text-pretty">
+        <p className="text-muted-foreground mb-8 text-sm text-pretty">
           提出你的问题，让我们开始对话吧
         </p>
+        {children}
       </div>
     </div>
   );

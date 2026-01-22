@@ -6,6 +6,7 @@ import { VList, type VListHandle } from "virtua";
 import ChatMessage from "./chat-message";
 import EmptyState from "./empty-state";
 import InputBox from "./input-box";
+import { QuickPrompts } from "./quick-prompts";
 import { useModelStore, useChatStatusStore } from "@/store/chat";
 import { useChatCapabilitiesStore } from "@/store/chat-capabilities";
 import { DefaultChatTransport } from "ai";
@@ -308,7 +309,11 @@ export default function ChatArea({
     <div className="relative mx-auto flex h-full w-full max-w-5xl flex-1 flex-col overflow-hidden p-2 pt-4">
       {messages.length === 0 ? (
         <div className="flex h-full items-center justify-center">
-          <EmptyState />
+          <EmptyState>
+            <QuickPrompts
+              onSelect={(prompt) => handleSendMessage(prompt, [])}
+            />
+          </EmptyState>
         </div>
       ) : (
         <div
