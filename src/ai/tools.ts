@@ -12,27 +12,26 @@ export const weatherTool = createTool({
   },
 });
 
-export const gomokuTool = {
-  gomoku: createTool({
-    description:
-      "Start a Gomoku (Five in a Row) game. Use this tool when the user wants to play Gomoku, 五子棋, or similar board games where players take turns placing pieces to get five in a row.",
-    inputSchema: z.object({
-      playerColor: z
-        .enum(["black", "white"])
-        .optional()
-        .describe("The color the user wants to play as. Default is black."),
-    }),
-    execute: async ({ playerColor = "black" }) => {
-      // Return data that will be used to render the Gomoku component
-      return {
-        game: "gomoku" as const,
-        playerColor,
-        message: `Let's play Gomoku! You are playing as ${playerColor === "black" ? "黑棋 (Black)" : "白棋 (White)"}. Click on the board to place your piece.`,
-      };
-    },
+export const gomokuTool = createTool({
+  title: "AI五子棋",
+  description:
+    "开始一局五子棋游戏。当用户想要玩五子棋或类似的棋盘游戏时使用此工具，玩家轮流放置棋子以形成五子连珠。",
+  inputSchema: z.object({
+    playerColor: z
+      .enum(["black", "white"])
+      .optional()
+      .describe("用户想要扮演的颜色。默认为黑色。"),
   }),
-};
+  execute: async ({ playerColor = "black" }) => {
+    // Return data that will be used to render the Gomoku component
+    return {
+      game: "gomoku" as const,
+      playerColor,
+      message: `让我们来玩五子棋！你正在扮演${playerColor === "black" ? "黑棋" : "白棋"}。点击棋盘放置你的棋子。`,
+    };
+  },
+});
 
 export const tools = {
-  gomokuGame: gomokuTool.gomoku,
+  gomokuGame: gomokuTool,
 };
