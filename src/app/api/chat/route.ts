@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { decryptApiKey } from "@/lib/crypto";
 import { ChatCapabilities, ModelExtraOptions } from "@/types/chat";
+import { tools } from "@/ai/tools";
 
 export async function POST(req: Request) {
   const {
@@ -57,12 +58,11 @@ export async function POST(req: Request) {
   // Parse extra options from model config - passthrough all fields directly
   const extraOptions = (modelConfig.extraOptions as ModelExtraOptions) || {};
 
-  // Build streamText options - spread all extra options directly
-  // This allows users to pass any vendor-specific parameters
   const result = streamText({
     model: model(modelConfig.modelId),
     system: modelConfig.systemPrompt || undefined,
     messages: await convertToModelMessages(messages),
+    tools: tools,
     // Passthrough all extra options directly to streamText
     providerOptions: {
       [providerName]: extraOptions,

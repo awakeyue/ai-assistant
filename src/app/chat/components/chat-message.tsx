@@ -4,7 +4,8 @@ import { UIMessage } from "@ai-sdk/react";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { memo, useState, useCallback, useDeferredValue } from "react";
-import { FileUIPart, TextUIPart } from "ai";
+import { FileUIPart, TextUIPart, ToolUIPart } from "ai";
+import { Gomoku } from "@/components/tools/gomoku";
 import Image from "next/image";
 import {
   FileSpreadsheet,
@@ -72,6 +73,8 @@ const ChatMessage = memo(
       }
     }, [textContent]);
 
+    console.log("Rendering ChatMessage:", message);
+
     const messageContent = (
       <div className="flex flex-col gap-3">
         {message.parts.map((part, idx) => {
@@ -96,6 +99,10 @@ const ChatMessage = memo(
             case "file":
               return <FileBlock key={idx} filePart={part} />;
             default:
+              // Handle tool invocations - type is "tool-{name}" or "dynamic-tool"
+              if (part.type === "tool-gomokuGame") {
+                return <ToolInvocationBlock key={idx} toolPart={part} />;
+              }
               return null;
           }
         })}
@@ -329,7 +336,44 @@ const FileBlock = memo(({ filePart }: { filePart: FileUIPart }) => {
 });
 FileBlock.displayName = "FileBlock";
 
-// --- 3. 核心文本渲染组件 (Text Block with Markdown) ---
+const ToolInvocationBlock = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
+  const { state } = toolPart;
+
+  // Handle different tool states
+  if (state === "input-available") {
+    // Tool is being called, show loading state
+    return (
+      <div className="block-fade-in my-2 flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2 text-sm text-blue-600 dark:border-blue-900/30 dark:bg-blue-950/10 dark:text-blue-400">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+        <span>正在准备 {}...</span>
+      </div>
+    );
+  }
+
+  if (state === "output-available") {
+    return (
+      <div className="block-fade-in my-3">
+        <Gomoku />
+      </div>
+    );
+  }
+
+  if (state === "output-error") {
+    return (
+      <div className="block-fade-in my-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-950/10">
+        <div className="text-sm text-red-600 dark:text-red-400">
+          工具调用失败: {}
+        </div>
+      </div>
+    );
+  }
+
+  // Other states
+  return null;
+});
+ToolInvocationBlock.displayName = "ToolInvocationBlock";
+
+// --- 4. 核心文本渲染组件 (Text Block with Markdown) ---
 // Uses useDeferredValue to keep UI responsive during rapid streaming updates
 const TextBlock = ({
   textPart,
