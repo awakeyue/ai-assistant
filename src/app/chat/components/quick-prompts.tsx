@@ -4,9 +4,9 @@ import {
   Lightbulb,
   Code,
   FileText,
-  MessageCircle,
   Sparkles,
   Gamepad2,
+  Timer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,12 @@ const quickPrompts: QuickPrompt[] = [
     isToolTrigger: true,
   },
   {
+    icon: <Timer className="h-4 w-4" />,
+    title: "现在几点了？",
+    prompt: "现在几点了？",
+    isToolTrigger: true,
+  },
+  {
     icon: <Lightbulb className="h-4 w-4" />,
     title: "帮我想个点子",
     prompt: "帮我想一个有创意的项目点子，可以用来学习编程",
@@ -38,11 +44,6 @@ const quickPrompts: QuickPrompt[] = [
     icon: <FileText className="h-4 w-4" />,
     title: "写一篇文章",
     prompt: "帮我写一篇关于人工智能发展趋势的简短文章",
-  },
-  {
-    icon: <MessageCircle className="h-4 w-4" />,
-    title: "日常对话",
-    prompt: "你好！今天过得怎么样？",
   },
 ];
 
@@ -58,7 +59,7 @@ export function QuickPrompts({ onSelect, className }: QuickPromptsProps) {
         <Sparkles className="h-4 w-4" />
         <span>试试这些</span>
       </div>
-      <div className="grid grid-cols-2 gap-2 px-4 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 sm:px-0">
+      <div className="grid grid-cols-1 gap-2 px-4 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 sm:px-0">
         {quickPrompts.map((item, index) => (
           <button
             key={index}
