@@ -1,4 +1,4 @@
-import { streamText, UIMessage, convertToModelMessages } from "ai";
+import { streamText, UIMessage, convertToModelMessages, stepCountIs } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
@@ -63,6 +63,7 @@ export async function POST(req: Request) {
     system: modelConfig.systemPrompt || undefined,
     messages: await convertToModelMessages(messages),
     tools: tools,
+    stopWhen: stepCountIs(5),
     // Passthrough all extra options directly to streamText
     providerOptions: {
       [providerName]: extraOptions,

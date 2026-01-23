@@ -468,8 +468,6 @@ ${boardString}
 
 请只回复坐标（如H8），不要其他内容。`;
 
-        console.log("LLM prompt:", prompt);
-
         const result = await generateText({
           model: model(modelConfig.modelId),
           prompt,

@@ -2,14 +2,28 @@
 
 import { memo } from "react";
 import { ToolUIPart } from "ai";
-import { Gomoku } from "./gomoku";
+import { Gomoku, GomokuGameState } from "./gomoku";
+import { useToolStateStore } from "@/store/tool-state-store";
+
+// Extended output type that includes persisted game state
+interface GomokuToolOutput {
+  game: "gomoku";
+  playerColor: "black" | "white";
+  message: string;
+  gameState?: GomokuGameState;
+}
+
+interface ToolGomokuGameProps {
+  toolPart: ToolUIPart;
+}
 
 /**
  * Tool component for Gomoku (Five in a Row) game
  * Renders different states: loading, ready to play, or error
  */
-export const ToolGomokuGame = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
-  const { state, title } = toolPart;
+export const ToolGomokuGame = memo(({ toolPart }: ToolGomokuGameProps) => {
+  const { state, title, toolCallId } = toolPart;
+  const updateToolState = useToolStateStore((state) => state.updateToolState);
 
   // Handle different tool states
   if (state === "input-available") {
@@ -23,9 +37,24 @@ export const ToolGomokuGame = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
   }
 
   if (state === "output-available") {
+    const output = toolPart.output as GomokuToolOutput | undefined;
+    const playerColor = output?.playerColor || "black";
+    const initialGameState = output?.gameState;
+
+    // Handle game state changes - wrap state in gameState key for persistence
+    const handleStateChange = (newState: GomokuGameState) => {
+      if (toolCallId) {
+        updateToolState(toolCallId, { gameState: newState });
+      }
+    };
+
     return (
       <div className="block-fade-in my-3 flex w-full justify-center">
-        <Gomoku />
+        <Gomoku
+          playerColor={playerColor}
+          initialState={initialGameState}
+          onStateChange={handleStateChange}
+        />
       </div>
     );
   }

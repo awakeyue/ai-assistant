@@ -35,38 +35,12 @@ export const gomokuTool = createTool({
 export const currentTimeTool = createTool({
   title: "获取当前时间",
   description:
-    "获取当前的日期和时间信息。当用户询问现在几点、今天日期、当前时间等相关问题时使用此工具。",
-  inputSchema: z.object({
-    timezone: z
-      .string()
-      .optional()
-      .describe(
-        "时区名称，如 'Asia/Shanghai'、'America/New_York'。默认使用服务器时区。",
-      ),
-  }),
-  execute: async ({ timezone }) => {
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = {
-      timeZone: timezone || undefined,
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      weekday: "long",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    };
-
-    const formatted = now.toLocaleString("zh-CN", options);
-    const resolvedTimezone =
-      timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-
+    "获取当前的日期和时间信息。当用户询问现在几点、今天日期、星期几、当前时间等相关问题时使用此工具。",
+  inputSchema: z.object({}),
+  execute: async () => {
     return {
-      datetime: now.toISOString(),
-      timezone: resolvedTimezone,
-      timestamp: now.getTime(),
-      formatted,
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
     };
   },
 });

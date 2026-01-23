@@ -2,35 +2,32 @@
 
 import { memo, useState, useEffect } from "react";
 import { ToolUIPart } from "ai";
-import { Clock, Calendar, Globe } from "lucide-react";
-
-interface TimeResult {
-  datetime: string;
-  timezone: string;
-  timestamp: number;
-  formatted: string;
-}
+import { Clock, Calendar } from "lucide-react";
 
 /**
  * Tool component for displaying current time
  * Shows formatted time with timezone information
+ * Features a dynamic clock that updates every second
  */
 export const ToolCurrentTime = memo(
   ({ toolPart }: { toolPart: ToolUIPart }) => {
     const { state, title } = toolPart;
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
-    // Parse result from tool output (output is available when state === 'output-available')
-    const timeResult =
-      state === "output-available"
-        ? (toolPart.output as TimeResult | undefined)
-        : undefined;
-
+    // Initialize time on client side and set up interval for updates
     useEffect(() => {
-      if (state === "output-available" && timeResult?.datetime) {
-        setCurrentTime(new Date(timeResult.datetime));
-      }
-    }, [state, timeResult]);
+      // Set initial time
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCurrentTime(new Date());
+
+      // Update time every second
+      const intervalId = setInterval(() => {
+        setCurrentTime(new Date());
+      }, 1000);
+
+      // Cleanup interval on unmount
+      return () => clearInterval(intervalId);
+    }, []);
 
     // Handle different tool states
     if (state === "input-available") {
@@ -43,22 +40,38 @@ export const ToolCurrentTime = memo(
     }
 
     if (state === "output-available") {
-      const displayTime = currentTime || new Date();
-      const formattedDate = displayTime.toLocaleDateString("zh-CN", {
+      // Show skeleton while hydrating on client
+      if (!currentTime) {
+        return (
+          <div className="block-fade-in my-3 w-full max-w-sm">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-linear-to-br from-blue-50 to-indigo-50 shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
+              <div className="border-b border-gray-200/50 bg-white/50 px-4 py-2 dark:border-gray-700/50 dark:bg-gray-800/50">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+                  <Clock size={16} className="text-blue-500" />
+                  <span>当前时间</span>
+                </div>
+              </div>
+              <div className="px-4 py-4">
+                <div className="mb-3 text-center">
+                  <div className="mx-auto h-10 w-40 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+                <div className="h-5 w-48 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const formattedDate = currentTime.toLocaleDateString("zh-CN", {
         year: "numeric",
         month: "long",
         day: "numeric",
         weekday: "long",
       });
-      const formattedTime = displayTime.toLocaleTimeString("zh-CN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-      });
-      const timezone =
-        timeResult?.timezone ||
-        Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const hours = currentTime.getHours().toString().padStart(2, "0");
+      const minutes = currentTime.getMinutes().toString().padStart(2, "0");
+      const seconds = currentTime.getSeconds().toString().padStart(2, "0");
 
       return (
         <div className="block-fade-in my-3 w-full max-w-sm">
@@ -66,8 +79,12 @@ export const ToolCurrentTime = memo(
             {/* Header */}
             <div className="border-b border-gray-200/50 bg-white/50 px-4 py-2 dark:border-gray-700/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                <Clock size={16} className="text-blue-500" />
+                <Clock size={16} className="animate-pulse text-blue-500" />
                 <span>当前时间</span>
+                <span className="ml-auto flex h-2 w-2">
+                  <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                </span>
               </div>
             </div>
 
@@ -75,7 +92,17 @@ export const ToolCurrentTime = memo(
             <div className="px-4 py-4">
               <div className="mb-3 text-center">
                 <div className="font-mono text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-                  {formattedTime}
+                  <span className="inline-block min-w-10 tabular-nums transition-all duration-300">
+                    {hours}
+                  </span>
+                  <span className="animate-pulse text-blue-500">:</span>
+                  <span className="inline-block min-w-10 tabular-nums transition-all duration-300">
+                    {minutes}
+                  </span>
+                  <span className="animate-pulse text-blue-500">:</span>
+                  <span className="inline-block min-w-10 tabular-nums transition-all duration-300">
+                    {seconds}
+                  </span>
                 </div>
               </div>
 
@@ -83,10 +110,6 @@ export const ToolCurrentTime = memo(
                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                   <Calendar size={14} />
                   <span>{formattedDate}</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500">
-                  <Globe size={14} />
-                  <span className="font-mono text-xs">{timezone}</span>
                 </div>
               </div>
             </div>

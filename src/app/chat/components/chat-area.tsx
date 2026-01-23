@@ -16,8 +16,9 @@ import { ScrollToBottomButton } from "@/components/custom/scroll-to-bottom-butto
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { saveChatMessages, createChat, updateChatTitle } from "@/actions/chat";
 import { useSWRConfig } from "swr";
-import type { UIMessage, FileUIPart } from "ai";
+import type { UIMessage, FileUIPart, ToolUIPart } from "ai";
 import { nanoid } from "nanoid";
+import { useToolStateStore } from "@/store/tool-state-store";
 import { useUIStore } from "@/store/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StreamingDots } from "@/components/custom/streaming-dots";
@@ -78,6 +79,11 @@ export default function ChatArea({
       navigatingToChatId !== serverChatId
     );
   }, [isNavigating, navigatingToChatId, serverChatId]);
+
+  // Get tool state store setter
+  const setOnToolStateChange = useToolStateStore(
+    (state) => state.setOnToolStateChange,
+  );
 
   // Reset refs when chatId changes
   useEffect(() => {
@@ -144,6 +150,52 @@ export default function ChatArea({
     },
     [messages, setMessages, stableId],
   );
+
+  // Handle tool state changes - update the tool output in messages
+  // This is a generic handler that works for any tool that needs state persistence
+  const handleToolStateChange = useCallback(
+    (toolCallId: string, toolState: Record<string, unknown>) => {
+      const updatedMessages = messages.map((msg) => {
+        if (msg.role !== "assistant") return msg;
+
+        const updatedParts = msg.parts.map((part) => {
+          // Check if this is the target tool part by toolCallId
+          if (
+            part.type.startsWith("tool-") &&
+            (part as ToolUIPart).toolCallId === toolCallId
+          ) {
+            const toolPart = part as ToolUIPart;
+            return {
+              ...toolPart,
+              output: {
+                ...(toolPart.output as Record<string, unknown>),
+                ...toolState,
+              },
+            } as typeof part;
+          }
+          return part;
+        });
+
+        return { ...msg, parts: updatedParts };
+      });
+
+      setMessages(updatedMessages);
+
+      // Persist the updated messages
+      if (stableId) {
+        saveChatMessages(stableId, updatedMessages);
+      }
+    },
+    [setMessages, stableId, messages],
+  );
+
+  // Register the callback to zustand store
+  useEffect(() => {
+    setOnToolStateChange(handleToolStateChange);
+    return () => {
+      setOnToolStateChange(null);
+    };
+  }, [handleToolStateChange, setOnToolStateChange]);
 
   const generateTitle = async (
     text: string,
