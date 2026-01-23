@@ -5,7 +5,11 @@ import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { memo, useState, useCallback, useDeferredValue } from "react";
 import { FileUIPart, TextUIPart } from "ai";
-import { ToolGomokuGame, ToolCurrentTime } from "@/components/tools";
+import {
+  ToolGomokuGame,
+  ToolCurrentTime,
+  ToolSvgPreview,
+} from "@/components/tools";
 import Image from "next/image";
 import {
   FileSpreadsheet,
@@ -61,10 +65,6 @@ const ChatMessage = memo(
       .map((part) => (part as TextUIPart).text)
       .join("");
 
-    const isToolType = message.parts.some((part) =>
-      part.type.startsWith("tool-"),
-    );
-
     // 复制功能
     const [isCopied, setIsCopied] = useState(false);
     const handleCopy = useCallback(async () => {
@@ -76,7 +76,6 @@ const ChatMessage = memo(
         console.error("Failed to copy:", err);
       }
     }, [textContent]);
-    console.log("message", message);
     const messageContent = (
       <div className="flex flex-col gap-3">
         {message.parts.map((part, idx) => {
@@ -104,6 +103,8 @@ const ChatMessage = memo(
               return <ToolGomokuGame key={idx} toolPart={part} />;
             case "tool-currentTime":
               return <ToolCurrentTime key={idx} toolPart={part} />;
+            case "tool-svgPreview":
+              return <ToolSvgPreview key={idx} toolPart={part} />;
             default:
               return null;
           }
@@ -149,7 +150,7 @@ const ChatMessage = memo(
           )}
 
           {/* 底部操作栏 */}
-          {!isLoading && !isToolType && (
+          {!isLoading && (
             <div
               className={cn(
                 "absolute -bottom-7 flex items-center gap-2 text-gray-500 opacity-100 transition-opacity dark:text-gray-300",

@@ -7,6 +7,7 @@ import {
   Sparkles,
   Gamepad2,
   Timer,
+  Brush,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,12 @@ const quickPrompts: QuickPrompt[] = [
     icon: <Gamepad2 className="h-4 w-4" />,
     title: "我想下五子棋！",
     prompt: "我想下五子棋！",
+    isToolTrigger: true,
+  },
+  {
+    icon: <Brush className="h-4 w-4" />,
+    title: "画一个loading图标",
+    prompt: "用svg画一个带动画的loading图标",
     isToolTrigger: true,
   },
   {

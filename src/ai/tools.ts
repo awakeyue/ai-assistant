@@ -57,7 +57,24 @@ export const currentTimeTool = createTool({
   },
 });
 
+export const svgPreviewTool = createTool({
+  title: "SVG 图形预览",
+  description:
+    "生成并实时预览 SVG 矢量图。当用户要求画图、生成图形、创建图标、绘制矢量图时使用此工具。例如：'画一只猫'、'生成一个心形图标'、'画一个带动画的loading图标'。",
+  inputSchema: z.object({
+    code: z.string().describe("要渲染的 SVG 代码，必须以 <svg 开头"),
+    title: z.string().optional().describe("可选的标题，用于描述生成的内容"),
+  }),
+  execute: async ({ code, title }) => {
+    return {
+      code,
+      title: title || "SVG 图形",
+    };
+  },
+});
+
 export const tools = {
   gomokuGame: gomokuTool,
   currentTime: currentTimeTool,
+  svgPreview: svgPreviewTool,
 };

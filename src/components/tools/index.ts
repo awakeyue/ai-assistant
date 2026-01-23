@@ -2,3 +2,4 @@
 export { Gomoku, type GomokuGameState } from "./gomoku";
 export { ToolGomokuGame } from "./tool-gomoku";
 export { ToolCurrentTime } from "./tool-current-time";
+export { ToolSvgPreview } from "./tool-svg-preview";
