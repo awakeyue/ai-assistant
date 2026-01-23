@@ -126,7 +126,6 @@ const Cell = memo(
         className={cn(
           "relative flex aspect-square cursor-pointer items-center justify-center transition-transform duration-150",
           disabled && "cursor-not-allowed",
-          !disabled && "hover:scale-105 active:scale-95",
         )}
         onClick={disabled ? undefined : onClick}
       >
@@ -148,8 +147,8 @@ const Cell = memo(
               "relative z-10 aspect-square rounded-full transition-all duration-200",
               isFullscreen ? "w-[80%]" : "w-[85%]",
               state === "black"
-                ? "bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 shadow-lg shadow-gray-900/50 dark:from-gray-600 dark:via-gray-700 dark:to-gray-800 dark:shadow-black/50"
-                : "border border-gray-200 bg-gradient-to-br from-white via-gray-50 to-gray-100 shadow-lg shadow-gray-400/50 dark:border-gray-500 dark:from-gray-100 dark:via-gray-200 dark:to-gray-300",
+                ? "bg-linear-to-br from-gray-700 via-gray-800 to-gray-900 shadow-lg shadow-gray-900/50 dark:from-gray-600 dark:via-gray-700 dark:to-gray-800 dark:shadow-black/50"
+                : "border border-gray-200 bg-linear-to-br from-white via-gray-50 to-gray-100 shadow-lg shadow-gray-400/50 dark:border-gray-500 dark:from-gray-100 dark:via-gray-200 dark:to-gray-300",
               isLastMove &&
                 "ring-2 ring-blue-500 ring-offset-1 dark:ring-blue-400 dark:ring-offset-amber-800/50",
               isWinningCell &&
@@ -161,8 +160,8 @@ const Cell = memo(
               className={cn(
                 "absolute top-[10%] left-[15%] h-[30%] w-[30%] rounded-full",
                 state === "black"
-                  ? "bg-gradient-to-br from-white/30 to-transparent"
-                  : "bg-gradient-to-br from-white/80 to-transparent",
+                  ? "bg-linear-to-br from-white/30 to-transparent"
+                  : "bg-linear-to-br from-white/80 to-transparent",
               )}
             />
           </div>
@@ -525,14 +524,14 @@ export function Gomoku({
       className={cn(
         "flex flex-col items-center gap-3 rounded-xl border shadow-xl transition-all duration-300 sm:gap-4",
         isFullscreen
-          ? "h-screen w-screen justify-center rounded-none border-none bg-gradient-to-br from-amber-100 via-amber-50 to-orange-100 p-6 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
-          : "w-full border-amber-200/50 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-3 sm:p-4 md:max-w-lg dark:border-gray-700 dark:from-gray-800/90 dark:via-gray-900 dark:to-gray-800/90",
+          ? "h-screen w-screen justify-center rounded-none border-none bg-linear-to-br from-amber-100 via-amber-50 to-orange-100 p-6 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+          : "w-full border-amber-200/50 bg-linear-to-br from-amber-50 via-white to-orange-50 p-3 sm:p-4 md:max-w-lg dark:border-gray-700 dark:from-gray-800/90 dark:via-gray-900 dark:to-gray-800/90",
       )}
     >
       {/* Decorative background pattern */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl opacity-30">
-        <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-gradient-to-br from-orange-300 to-amber-400 blur-3xl dark:from-orange-600/30 dark:to-amber-500/30" />
-        <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-gradient-to-br from-amber-300 to-yellow-400 blur-3xl dark:from-amber-600/30 dark:to-yellow-500/30" />
+        <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-linear-to-br from-orange-300 to-amber-400 blur-3xl dark:from-orange-600/30 dark:to-amber-500/30" />
+        <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-linear-to-br from-amber-300 to-yellow-400 blur-3xl dark:from-amber-600/30 dark:to-yellow-500/30" />
       </div>
 
       {/* Game header */}
@@ -543,10 +542,10 @@ export function Gomoku({
         )}
       >
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 shadow-md dark:from-amber-500 dark:to-orange-600">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-amber-400 to-orange-500 shadow-md dark:from-amber-500 dark:to-orange-600">
             <span className="text-lg">⚫</span>
           </div>
-          <h3 className="bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-base font-bold text-transparent sm:text-lg dark:from-amber-400 dark:to-orange-400">
+          <h3 className="bg-linear-to-r from-amber-700 to-orange-600 bg-clip-text text-base font-bold text-transparent sm:text-lg dark:from-amber-400 dark:to-orange-400">
             AI五子棋
           </h3>
         </div>
@@ -587,8 +586,8 @@ export function Gomoku({
             className={cn(
               "h-6 w-6 rounded-full shadow-md transition-all duration-300",
               currentPlayer === "black"
-                ? "bg-gradient-to-br from-gray-700 to-gray-900 ring-2 ring-amber-400/50 dark:from-gray-600 dark:to-gray-800 dark:ring-amber-500/50"
-                : "border-2 border-gray-200 bg-gradient-to-br from-white to-gray-100 ring-2 ring-amber-300/50 dark:border-gray-500 dark:ring-amber-400/50",
+                ? "bg-linear-to-br from-gray-700 to-gray-900 ring-2 ring-amber-400/50 dark:from-gray-600 dark:to-gray-800 dark:ring-amber-500/50"
+                : "border-2 border-gray-200 bg-linear-to-br from-white to-gray-100 ring-2 ring-amber-300/50 dark:border-gray-500 dark:ring-amber-400/50",
             )}
           />
           <span className="font-semibold text-gray-700 dark:text-gray-200">
@@ -596,7 +595,7 @@ export function Gomoku({
           </span>
         </div>
 
-        <div className="h-5 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent dark:via-gray-600" />
+        <div className="h-5 w-px bg-linear-to-b from-transparent via-gray-300 to-transparent dark:via-gray-600" />
 
         {isAIThinking ? (
           <div className="flex items-center gap-2">
@@ -613,7 +612,7 @@ export function Gomoku({
             className={cn(
               "rounded-full px-3 py-1 text-xs font-bold tracking-wide uppercase transition-all",
               isPlayerTurn
-                ? "bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-md shadow-green-500/30 dark:from-green-500 dark:to-emerald-600"
+                ? "bg-linear-to-r from-green-400 to-emerald-500 text-white shadow-md shadow-green-500/30 dark:from-green-500 dark:to-emerald-600"
                 : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400",
             )}
           >
@@ -640,7 +639,7 @@ export function Gomoku({
         }}
       >
         {/* Dark mode board background override */}
-        <div className="pointer-events-none absolute inset-0 hidden rounded-xl bg-gradient-to-br from-amber-700 via-amber-800 to-amber-900 dark:block" />
+        <div className="pointer-events-none absolute inset-0 hidden rounded-xl bg-linear-to-br from-amber-700 via-amber-800 to-amber-900 dark:block" />
         {/* Wood grain texture overlay */}
         <div
           className="pointer-events-none absolute inset-0 opacity-20 mix-blend-overlay dark:opacity-30"
@@ -725,26 +724,26 @@ export function Gomoku({
           <p className="text-xl font-bold">
             {gameStatus === "black-wins" ? (
               playerColor === "black" ? (
-                <span className="bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">
                   🎉 恭喜你获胜！
                 </span>
               ) : (
-                <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
                   😢 AI 获胜！
                 </span>
               )
             ) : gameStatus === "white-wins" ? (
               playerColor === "white" ? (
-                <span className="bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">
                   🎉 恭喜你获胜！
                 </span>
               ) : (
-                <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
                   😢 AI 获胜！
                 </span>
               )
             ) : (
-              <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
                 🤝 平局！
               </span>
             )}
@@ -753,7 +752,7 @@ export function Gomoku({
             variant="default"
             size="sm"
             onClick={handleReset}
-            className="mt-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md hover:from-amber-600 hover:to-orange-600"
+            className="mt-3 bg-linear-to-r from-amber-500 to-orange-500 text-white shadow-md hover:from-amber-600 hover:to-orange-600"
           >
             再来一局
           </Button>

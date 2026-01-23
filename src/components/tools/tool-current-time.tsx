@@ -1,33 +1,28 @@
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo } from "react";
 import { ToolUIPart } from "ai";
 import { Clock, Calendar } from "lucide-react";
 
 /**
+ * Tool output type from server
+ */
+interface CurrentTimeOutput {
+  formattedDate: string;
+  hours: string;
+  minutes: string;
+  seconds: string;
+  timestamp: string;
+}
+
+/**
  * Tool component for displaying current time
  * Shows formatted time with timezone information
- * Features a dynamic clock that updates every second
+ * Time is fetched from server to ensure consistency with AI response
  */
 export const ToolCurrentTime = memo(
   ({ toolPart }: { toolPart: ToolUIPart }) => {
     const { state, title } = toolPart;
-    const [currentTime, setCurrentTime] = useState<Date | null>(null);
-
-    // Initialize time on client side and set up interval for updates
-    useEffect(() => {
-      // Set initial time
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCurrentTime(new Date());
-
-      // Update time every second
-      const intervalId = setInterval(() => {
-        setCurrentTime(new Date());
-      }, 1000);
-
-      // Cleanup interval on unmount
-      return () => clearInterval(intervalId);
-    }, []);
 
     // Handle different tool states
     if (state === "input-available") {
@@ -40,8 +35,11 @@ export const ToolCurrentTime = memo(
     }
 
     if (state === "output-available") {
-      // Show skeleton while hydrating on client
-      if (!currentTime) {
+      // Get time data from server output
+      const output = toolPart.output as CurrentTimeOutput | undefined;
+
+      // Show skeleton if output is not available yet
+      if (!output) {
         return (
           <div className="block-fade-in my-3 w-full max-w-sm">
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-linear-to-br from-blue-50 to-indigo-50 shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
@@ -62,16 +60,7 @@ export const ToolCurrentTime = memo(
         );
       }
 
-      const formattedDate = currentTime.toLocaleDateString("zh-CN", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        weekday: "long",
-      });
-
-      const hours = currentTime.getHours().toString().padStart(2, "0");
-      const minutes = currentTime.getMinutes().toString().padStart(2, "0");
-      const seconds = currentTime.getSeconds().toString().padStart(2, "0");
+      const { formattedDate, hours, minutes, seconds } = output;
 
       return (
         <div className="block-fade-in my-3 w-full max-w-sm">
@@ -79,12 +68,8 @@ export const ToolCurrentTime = memo(
             {/* Header */}
             <div className="border-b border-gray-200/50 bg-white/50 px-4 py-2 dark:border-gray-700/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
-                <Clock size={16} className="animate-pulse text-blue-500" />
+                <Clock size={16} className="text-blue-500" />
                 <span>当前时间</span>
-                <span className="ml-auto flex h-2 w-2">
-                  <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-                </span>
               </div>
             </div>
 
@@ -92,15 +77,15 @@ export const ToolCurrentTime = memo(
             <div className="px-4 py-4">
               <div className="mb-3 text-center">
                 <div className="font-mono text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-                  <span className="inline-block min-w-10 tabular-nums transition-all duration-300">
+                  <span className="inline-block min-w-10 tabular-nums">
                     {hours}
                   </span>
-                  <span className="animate-pulse text-blue-500">:</span>
-                  <span className="inline-block min-w-10 tabular-nums transition-all duration-300">
+                  <span className="text-blue-500">:</span>
+                  <span className="inline-block min-w-10 tabular-nums">
                     {minutes}
                   </span>
-                  <span className="animate-pulse text-blue-500">:</span>
-                  <span className="inline-block min-w-10 tabular-nums transition-all duration-300">
+                  <span className="text-blue-500">:</span>
+                  <span className="inline-block min-w-10 tabular-nums">
                     {seconds}
                   </span>
                 </div>

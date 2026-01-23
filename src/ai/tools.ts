@@ -38,9 +38,21 @@ export const currentTimeTool = createTool({
     "获取当前的日期和时间信息。当用户询问现在几点、今天日期、星期几、当前时间等相关问题时使用此工具。",
   inputSchema: z.object({}),
   execute: async () => {
+    const now = new Date();
     return {
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString(),
+      // Formatted date string for display
+      formattedDate: now.toLocaleDateString("zh-CN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "long",
+      }),
+      // Time components for display
+      hours: now.getHours().toString().padStart(2, "0"),
+      minutes: now.getMinutes().toString().padStart(2, "0"),
+      seconds: now.getSeconds().toString().padStart(2, "0"),
+      // ISO string for reference
+      timestamp: now.toISOString(),
     };
   },
 });
