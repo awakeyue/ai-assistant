@@ -12,53 +12,17 @@ interface SvgPreviewOutput {
   title: string;
 }
 
-/**
- * Custom comparison function for memo
- * Only re-render when state or output actually changes
- * This prevents flickering when parent component re-renders during streaming
- */
-function areToolPartsEqual(
-  prevProps: { toolPart: ToolUIPart },
-  nextProps: { toolPart: ToolUIPart },
+function areSvgCodeEqual(
+  prevProps: { code: string },
+  nextProps: { code: string },
 ): boolean {
-  const prev = prevProps.toolPart;
-  const next = nextProps.toolPart;
-
-  // If state changed, re-render
-  if (prev.state !== next.state) {
-    return false;
-  }
-
-  // For output-available state, compare output content
-  if (prev.state === "output-available" && next.state === "output-available") {
-    const prevOutput = prev.output as SvgPreviewOutput | undefined;
-    const nextOutput = next.output as SvgPreviewOutput | undefined;
-
-    // If both are undefined, they're equal
-    if (!prevOutput && !nextOutput) {
-      return true;
-    }
-
-    // If one is undefined and the other isn't, they're not equal
-    if (!prevOutput || !nextOutput) {
-      return false;
-    }
-
-    // Compare actual content
-    return (
-      prevOutput.code === nextOutput.code &&
-      prevOutput.title === nextOutput.title
-    );
-  }
-
-  // For other states, state equality is enough
-  return true;
+  return prevProps.code === nextProps.code;
 }
 
 /**
  * Safely render SVG code
  */
-function SvgRenderer({ code }: { code: string }) {
+const SvgRenderer = memo(({ code }: { code: string }) => {
   // Sanitize SVG code - basic XSS prevention
   const sanitizedSvg = useMemo(() => {
     // Remove potentially dangerous attributes and elements
@@ -71,11 +35,13 @@ function SvgRenderer({ code }: { code: string }) {
 
   return (
     <div
-      className="flex items-center justify-center [&>svg]:max-h-64 [&>svg]:max-w-full"
+      className="flex items-center justify-center [&>svg]:max-h-96 [&>svg]:max-w-full"
       dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
     />
   );
-}
+}, areSvgCodeEqual);
+
+SvgRenderer.displayName = "SvgRenderer";
 
 /**
  * Tool component for SVG preview
@@ -83,6 +49,8 @@ function SvgRenderer({ code }: { code: string }) {
  */
 export const ToolSvgPreview = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
   const { state, title } = toolPart;
+  const output = toolPart.output as SvgPreviewOutput | undefined;
+
   const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -97,8 +65,8 @@ export const ToolSvgPreview = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
     }
   }, []);
 
-  // Handle loading state
-  if (state === "input-available") {
+  // Handle loading/streaming states
+  if (state === "input-streaming" || state === "input-available") {
     return (
       <div className="block-fade-in my-2 flex items-center gap-2 rounded-lg border border-purple-100 bg-purple-50/50 px-3 py-2 text-sm text-purple-600 dark:border-purple-900/30 dark:bg-purple-950/10 dark:text-purple-400">
         <div className="h-4 w-4 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
@@ -108,12 +76,10 @@ export const ToolSvgPreview = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
   }
 
   if (state === "output-available") {
-    const output = toolPart.output as SvgPreviewOutput | undefined;
-
     // Show skeleton if output is not available yet
     if (!output) {
       return (
-        <div className="block-fade-in my-3 w-full max-w-md">
+        <div className="block-fade-in my-3 w-full max-w-2xl">
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-linear-to-br from-purple-50 to-pink-50 shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
             <div className="border-b border-gray-200/50 bg-white/50 px-4 py-2 dark:border-gray-700/50 dark:bg-gray-800/50">
               <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -132,7 +98,7 @@ export const ToolSvgPreview = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
     const { code, title: outputTitle } = output;
 
     return (
-      <div className="block-fade-in my-3 w-full max-w-md">
+      <div className="block-fade-in my-3 w-full max-w-2xl">
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-linear-to-br from-purple-50 to-pink-50 shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-200/50 bg-white/50 px-4 py-2 dark:border-gray-700/50 dark:bg-gray-800/50">
@@ -166,15 +132,15 @@ export const ToolSvgPreview = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
           </div>
 
           {/* Content */}
-          <div className="min-h-32">
+          <div className="flex min-h-64">
             {showCode ? (
-              <div className="max-h-64 overflow-auto bg-gray-900 p-4">
+              <div className="max-h-80 w-full overflow-auto bg-gray-900 p-4">
                 <pre className="text-xs text-gray-100">
                   <code>{code}</code>
                 </pre>
               </div>
             ) : (
-              <div className="flex items-center justify-center bg-white/80 p-4 dark:bg-gray-800/80">
+              <div className="flex min-h-64 w-full items-center justify-center bg-white/80 p-4 dark:bg-gray-800/80">
                 <SvgRenderer code={code} />
               </div>
             )}
@@ -195,6 +161,6 @@ export const ToolSvgPreview = memo(({ toolPart }: { toolPart: ToolUIPart }) => {
   }
 
   return null;
-}, areToolPartsEqual);
+});
 
 ToolSvgPreview.displayName = "ToolSvgPreview";

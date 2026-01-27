@@ -79,11 +79,13 @@ const ChatMessage = memo(
     const messageContent = (
       <div className="flex flex-col gap-3">
         {message.parts.map((part, idx) => {
+          const key =
+            "toolCallId" in part ? part.toolCallId : `${part.type}-${idx}`;
           switch (part.type) {
             case "text":
               return (
                 <TextBlock
-                  key={idx}
+                  key={key}
                   textPart={part}
                   isUser={isUser}
                   isStreaming={isStreaming && isLatest}
@@ -92,23 +94,24 @@ const ChatMessage = memo(
             case "reasoning":
               return (
                 <ReasoningBlock
-                  key={idx}
+                  key={key}
                   text={part.text}
                   isStreaming={!!isStreaming}
                 />
               );
             case "file":
-              return <FileBlock key={idx} filePart={part} />;
+              return <FileBlock key={key} filePart={part} />;
             case "tool-gomokuGame":
-              return <ToolGomokuGame key={idx} toolPart={part} />;
+              return <ToolGomokuGame key={key} toolPart={part} />;
             case "tool-currentTime":
-              return <ToolCurrentTime key={idx} toolPart={part} />;
+              return <ToolCurrentTime key={key} toolPart={part} />;
             case "tool-svgPreview":
-              return <ToolSvgPreview key={idx} toolPart={part} />;
+              return <ToolSvgPreview key={key} toolPart={part} />;
             default:
               return null;
           }
         })}
+        {isStreaming && <StreamingDots />}
       </div>
     );
 
@@ -516,7 +519,7 @@ const markdownComponents: Components = {
 // Separate component for Markdown rendering
 // Memoized to prevent unnecessary re-parses when text hasn't changed
 const MarkdownRenderer = memo(
-  ({ text, isStreaming }: { text: string; isStreaming?: boolean }) => {
+  ({ text }: { text: string; isStreaming?: boolean }) => {
     return (
       <div
         className="markdown-body leading-6"
@@ -533,7 +536,6 @@ const MarkdownRenderer = memo(
         >
           {text}
         </ReactMarkdown>
-        {isStreaming && <StreamingDots />}
       </div>
     );
   },
