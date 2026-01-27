@@ -73,8 +73,35 @@ export const svgPreviewTool = createTool({
   },
 });
 
+export const codeSandboxTool = createTool({
+  title: "代码沙盒预览",
+  description:
+    "生成并实时预览可运行的代码。当用户要求编写 React 组件、Vue 组件、或需要预览效果的前端代码时使用此工具。例如：'写一个按钮组件'、'创建一个计数器'、'写一个带动画的卡片组件'。支持 React、React TypeScript、Vue、Vanilla JS/TS 模板。，注意如果用户要求使用特定的依赖包，需要在 dependencies 中指定， 如果使用了ts，需要在 template 中指定 vue-ts 或 vanilla-ts，确保代码可以正确运行。",
+  inputSchema: z.object({
+    code: z.string().describe("要运行的代码，必须是完整的可执行组件代码"),
+    title: z.string().optional().describe("可选的标题，用于描述生成的内容"),
+    template: z
+      .enum(["react", "react-ts", "vanilla", "vanilla-ts", "vue", "vue-ts"])
+      .default("react")
+      .describe("代码模板类型，默认为 react"),
+    dependencies: z
+      .record(z.string(), z.string())
+      .optional()
+      .describe("可选的依赖包及版本，例如 { 'lodash': '4.17.21' }"),
+  }),
+  execute: async ({ code, title, template, dependencies }) => {
+    return {
+      code,
+      title: title || "代码预览",
+      template: template || "react",
+      dependencies,
+    };
+  },
+});
+
 export const tools = {
   gomokuGame: gomokuTool,
   currentTime: currentTimeTool,
   svgPreview: svgPreviewTool,
+  codeSandbox: codeSandboxTool,
 };

@@ -8,6 +8,7 @@ import {
   Gamepad2,
   Timer,
   Brush,
+  Code2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,12 @@ interface QuickPrompt {
 }
 
 const quickPrompts: QuickPrompt[] = [
+  {
+    icon: <Code2 className="h-4 w-4" />,
+    title: "写react组件",
+    prompt: "使用react + tailwind css + ts，帮我实现一个现代风格的按钮组件",
+    isToolTrigger: true,
+  },
   {
     icon: <Gamepad2 className="h-4 w-4" />,
     title: "我想下五子棋！",

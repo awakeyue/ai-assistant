@@ -9,6 +9,7 @@ import {
   ToolGomokuGame,
   ToolCurrentTime,
   ToolSvgPreview,
+  ToolCodeSandbox,
 } from "@/components/tools";
 import Image from "next/image";
 import {
@@ -107,6 +108,8 @@ const ChatMessage = memo(
               return <ToolCurrentTime key={key} toolPart={part} />;
             case "tool-svgPreview":
               return <ToolSvgPreview key={key} toolPart={part} />;
+            case "tool-codeSandbox":
+              return <ToolCodeSandbox key={key} toolPart={part} />;
             default:
               return null;
           }
