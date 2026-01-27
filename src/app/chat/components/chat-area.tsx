@@ -428,7 +428,7 @@ export default function ChatArea({
 
       <ScrollToBottomButton
         onClick={handleScrollToBottomClick}
-        visible={showScrollButton}
+        visible={showScrollButton && messages.length > 0}
         loading={status === "streaming"}
       />
 
