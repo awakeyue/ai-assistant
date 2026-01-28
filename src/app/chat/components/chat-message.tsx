@@ -77,6 +77,7 @@ const ChatMessage = memo(
         console.error("Failed to copy:", err);
       }
     }, [textContent]);
+
     const messageContent = (
       <div className="flex flex-col gap-3">
         {message.parts.map((part, idx) => {
@@ -109,7 +110,13 @@ const ChatMessage = memo(
             case "tool-svgPreview":
               return <ToolSvgPreview key={key} toolPart={part} />;
             case "tool-codeSandbox":
-              return <ToolCodeSandbox key={key} toolPart={part} />;
+              return (
+                <ToolCodeSandbox
+                  key={key}
+                  toolPart={part}
+                  isStreaming={!!isStreaming}
+                />
+              );
             default:
               return null;
           }

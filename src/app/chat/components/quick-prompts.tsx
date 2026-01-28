@@ -23,7 +23,8 @@ const quickPrompts: QuickPrompt[] = [
   {
     icon: <Code2 className="h-4 w-4" />,
     title: "写react组件",
-    prompt: "使用react + tailwind css + ts，帮我实现一个现代风格的按钮组件",
+    prompt:
+      "使用react + tailwind css + ts，帮我实现一个现代风格的loading组件，并使用沙盒预览",
     isToolTrigger: true,
   },
   {

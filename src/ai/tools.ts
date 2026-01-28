@@ -75,25 +75,83 @@ export const svgPreviewTool = createTool({
 
 export const codeSandboxTool = createTool({
   title: "代码沙盒预览",
-  description:
-    "生成并实时预览可运行的代码。当用户要求编写 React 组件、Vue 组件、或需要预览效果的前端代码时使用此工具。例如：'写一个按钮组件'、'创建一个计数器'、'写一个带动画的卡片组件'。支持 React、React TypeScript、Vue、Vanilla JS/TS 模板。，注意如果用户要求使用特定的依赖包，需要在 dependencies 中指定， 如果使用了ts，需要在 template 中指定 vue-ts 或 vanilla-ts，确保代码可以正确运行。",
+  description: `交互式代码沙盒工具，用于实时预览和运行代码。
+
+【何时使用此工具】
+- 用户明确要求"预览"、"实时预览"、"运行"、"沙盒"效果
+- 用户要求创建可交互的 demo、示例、原型
+
+【何时不使用此工具】
+- 用户只是要求"写代码"、"生成代码"但没提预览 → 直接用 markdown 代码块返回
+- 用户要求解释代码或代码审查 → 不使用此工具
+
+【支持的模板类型】
+1. "static" - 纯 HTML/CSS/JS（推荐用于简单页面、不需要框架的场景）
+2. "react" / "react-ts" - React 项目（默认）
+3. "vue" / "vue-ts" - Vue 3 项目
+4. "vanilla" / "vanilla-ts" - 纯 JavaScript/TypeScript
+
+【重要规则】
+1. 对于简单 HTML 页面，必须使用 template: "static"，入口文件为 /index.html
+2. React 项目入口文件是 /App.js 或 /App.tsx
+3. Vue 项目入口文件是 /src/App.vue
+4. Vanilla 项目入口文件是 /index.js 或 /index.ts
+5. 使用外部依赖时必须在 dependencies 中声明
+6. 文件路径必须以 "/" 开头`,
   inputSchema: z.object({
-    code: z.string().describe("要运行的代码，必须是完整的可执行组件代码"),
-    title: z.string().optional().describe("可选的标题，用于描述生成的内容"),
+    files: z
+      .record(
+        z.string(),
+        z.object({
+          code: z.string().describe("文件内容"),
+          hidden: z.boolean().optional().describe("是否隐藏此文件"),
+          active: z.boolean().optional().describe("是否为激活的文件"),
+          readOnly: z.boolean().optional().describe("是否只读"),
+        }),
+      )
+      .describe(
+        `文件映射对象。键为文件路径（必须以/开头），值为文件配置。
+示例:
+- static 模板: { "/index.html": { code: "<html>...</html>", active: true } }
+- react 模板: { "/App.js": { code: "export default function App() {...}", active: true } }
+- 多文件: { "/App.tsx": { code: "...", active: true }, "/components/Button.tsx": { code: "..." } }`,
+      ),
     template: z
-      .enum(["react", "react-ts", "vanilla", "vanilla-ts", "vue", "vue-ts"])
-      .default("react")
-      .describe("代码模板类型，默认为 react"),
+      .enum([
+        "static",
+        "react",
+        "react-ts",
+        "vanilla",
+        "vanilla-ts",
+        "vue",
+        "vue-ts",
+      ])
+      .describe(
+        `代码模板类型:
+- "static": 纯 HTML/CSS/JS 页面（入口: /index.html）
+- "react": React + JavaScript（入口: /App.js）
+- "react-ts": React + TypeScript（入口: /App.tsx）
+- "vue": Vue 3 + JavaScript（入口: /src/App.vue）
+- "vue-ts": Vue 3 + TypeScript（入口: /src/App.vue）
+- "vanilla": 纯 JavaScript（入口: /index.js）
+- "vanilla-ts": 纯 TypeScript（入口: /index.ts）`,
+      ),
+    title: z
+      .string()
+      .optional()
+      .describe("预览标题，简短描述生成的内容，如：'登录表单'、'动画按钮'"),
     dependencies: z
       .record(z.string(), z.string())
       .optional()
-      .describe("可选的依赖包及版本，例如 { 'lodash': '4.17.21' }"),
+      .describe(
+        "NPM 依赖包，格式: { 包名: 版本号 }，如: { 'lodash': 'latest', 'axios': '^1.6.0' }",
+      ),
   }),
-  execute: async ({ code, title, template, dependencies }) => {
+  execute: async ({ files, title, template, dependencies }) => {
     return {
-      code,
+      files,
       title: title || "代码预览",
-      template: template || "react",
+      template,
       dependencies,
     };
   },
