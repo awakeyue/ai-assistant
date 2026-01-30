@@ -18,9 +18,13 @@ import {
   Code2,
   Eye,
   RotateCcw,
-  AlertCircle,
+  BadgeAlert,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CodeSkeletonLoader } from "../custom/code-loading";
+import { cn } from "@/lib/utils";
 
 // =============================================================================
 // Types
@@ -67,15 +71,28 @@ type TabType = "preview" | "code";
 /**
  * Template configuration with entry points and boilerplate
  */
-const TEMPLATE_CONFIG: Record<
-  SupportedTemplate,
-  {
-    entryFile: string;
-    sandpackTemplate: SandpackPredefinedTemplate;
-    // Files to add if missing entry point
-    boilerplate?: Record<string, string>;
-  }
-> = {
+interface TemplateConfigBase {
+  entryFile: string;
+  sandpackTemplate: SandpackPredefinedTemplate;
+  // Files to add if missing entry point
+  boilerplate?: Record<string, string>;
+}
+
+/**
+ * Extended config for React templates with dynamic index generation
+ */
+interface ReactTemplateConfig extends TemplateConfigBase {
+  // Pattern to match App file (e.g., /App.tsx or /src/App.tsx)
+  appPattern: RegExp;
+  // Path for the index file to generate
+  indexFile: string;
+  // Function to generate index file content based on App file path
+  generateIndex: (appPath: string) => string;
+}
+
+type TemplateConfig = TemplateConfigBase | ReactTemplateConfig;
+
+const TEMPLATE_CONFIG: Record<SupportedTemplate, TemplateConfig> = {
   static: {
     entryFile: "/index.html",
     sandpackTemplate: "static",
@@ -99,10 +116,44 @@ const TEMPLATE_CONFIG: Record<
   react: {
     entryFile: "/App.js",
     sandpackTemplate: "react",
+    appPattern: /\/(?:src\/)?App\.jsx?$/,
+    indexFile: "/index.js",
+    generateIndex: (appPath: string) => {
+      const importPath = appPath
+        .replace(/\.(js|jsx)$/, "")
+        .replace(/^\//, "./");
+      return `import React, { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "${importPath}";
+
+const root = createRoot(document.getElementById("root"));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);`;
+    },
   },
   "react-ts": {
     entryFile: "/App.tsx",
     sandpackTemplate: "react-ts",
+    appPattern: /\/(?:src\/)?App\.tsx?$/,
+    indexFile: "/index.tsx",
+    generateIndex: (appPath: string) => {
+      const importPath = appPath
+        .replace(/\.(ts|tsx)$/, "")
+        .replace(/^\//, "./");
+      return `import React, { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "${importPath}";
+
+const root = createRoot(document.getElementById("root")!);
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);`;
+    },
   },
   vue: {
     entryFile: "/src/App.vue",
@@ -125,6 +176,17 @@ const TEMPLATE_CONFIG: Record<
 // =============================================================================
 // Helper Functions
 // =============================================================================
+
+/**
+ * Type guard to check if config is a React template config
+ */
+function isReactTemplateConfig(
+  config: TemplateConfig,
+): config is ReactTemplateConfig {
+  return (
+    "appPattern" in config && "generateIndex" in config && "indexFile" in config
+  );
+}
 
 /**
  * Normalize file path to start with /
@@ -156,21 +218,39 @@ function processFiles(
     }
   }
 
-  // Check if entry file exists
-  const hasEntryFile = Object.keys(processedFiles).some(
-    (path) =>
-      path === config.entryFile ||
-      // Also check common variations
-      (template === "static" && path.includes("index.html")) ||
-      (template.startsWith("react") && path.includes("App.")) ||
-      (template.startsWith("vue") && path.includes("App.vue")),
-  );
+  // For React templates, check if we need to generate index file
+  if (template.startsWith("react") && isReactTemplateConfig(config)) {
+    const { appPattern, generateIndex, indexFile } = config;
 
-  // If no entry file and we have boilerplate, add it
-  if (!hasEntryFile && config.boilerplate) {
-    for (const [path, code] of Object.entries(config.boilerplate)) {
-      if (!processedFiles[path]) {
-        processedFiles[path] = { code, hidden: true };
+    // Find the App file path
+    const appFilePath = Object.keys(processedFiles).find((path) =>
+      appPattern.test(path),
+    );
+
+    // If we have an App file but no index file, generate one
+    if (appFilePath && !processedFiles[indexFile]) {
+      processedFiles[indexFile] = {
+        code: generateIndex(appFilePath),
+        hidden: true,
+      };
+    }
+  } else {
+    // For non-React templates, use the old logic
+    // Check if entry file exists
+    const hasEntryFile = Object.keys(processedFiles).some(
+      (path) =>
+        path === config.entryFile ||
+        // Also check common variations
+        (template === "static" && path.includes("index.html")) ||
+        (template.startsWith("vue") && path.includes("App.vue")),
+    );
+
+    // If no entry file and we have boilerplate, add it
+    if (!hasEntryFile && config.boilerplate) {
+      for (const [path, code] of Object.entries(config.boilerplate)) {
+        if (!processedFiles[path]) {
+          processedFiles[path] = { code, hidden: true };
+        }
       }
     }
   }
@@ -237,7 +317,7 @@ const CodeEditorPanel = memo(
     isFullscreen: boolean;
     showTabs: boolean;
   }) => {
-    const height = isFullscreen ? "calc(100vh - 60px)" : "50vh";
+    const height = isFullscreen ? "calc(100vh - 60px)" : "60vh";
 
     return (
       <SandpackCodeEditor
@@ -323,6 +403,7 @@ const SandpackRenderer = memo(
     onCopy,
     copied,
   }: SandpackRendererProps) => {
+    console.log("SandpackRenderer", { files, template, dependencies });
     const [activeTab, setActiveTab] = useState<TabType>("preview");
     const [isFullscreen, setIsFullscreen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -363,8 +444,11 @@ const SandpackRenderer = memo(
       [files, template],
     );
 
-    const fileCount = Object.keys(processedFiles).length;
-    const isMultiFile = fileCount > 1;
+    // Count only visible files (not hidden)
+    const visibleFileCount = Object.values(processedFiles).filter(
+      (file) => !file.hidden,
+    ).length;
+    const isMultiFile = visibleFileCount > 1;
 
     // Get Sandpack template
     const sandpackTemplate = TEMPLATE_CONFIG[template].sandpackTemplate;
@@ -418,7 +502,7 @@ const SandpackRenderer = memo(
 
               <ActionButtons
                 activeTab={activeTab}
-                fileCount={fileCount}
+                fileCount={visibleFileCount}
                 copied={copied}
                 isFullscreen={isFullscreen}
                 onCopy={onCopy}
@@ -464,21 +548,67 @@ const LoadingState = memo(({ title }: { title?: string }) => (
 
 LoadingState.displayName = "LoadingState";
 
-const ErrorState = memo(
-  ({ title, error }: { title?: string; error?: string }) => (
-    <div className="block-fade-in my-2 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-950/10">
-      <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
-        <AlertCircle size={16} />
-        <span>代码生成失败{title ? `: ${title}` : ""}</span>
-      </div>
-      {error && (
-        <p className="mt-1 text-xs text-red-500 dark:text-red-400/80">
-          {error}
-        </p>
+const ErrorState = memo(({ error }: { title?: string; error?: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const showAlertIcon = !isOpen && !isHovered;
+  const showChevronIcon = isHovered || isOpen;
+
+  return (
+    <div className="block-fade-in my-2">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="group flex w-full items-center gap-1 py-1 text-red-400 transition-colors hover:text-red-500 dark:text-red-400 dark:hover:text-red-300"
+      >
+        {/* Icon container with smooth transition */}
+        <span className="relative flex h-4 w-4 items-center justify-center">
+          {/* Alert icon - visible when collapsed and not hovered */}
+          <BadgeAlert
+            size={16}
+            className={cn(
+              "absolute transition-all duration-200",
+              showAlertIcon ? "scale-100 opacity-100" : "scale-75 opacity-0",
+            )}
+          />
+          {/* Chevron icon - visible when hovered or expanded */}
+          {isOpen ? (
+            <ChevronDown
+              size={16}
+              className={cn(
+                "absolute transition-all duration-200",
+                showChevronIcon
+                  ? "scale-100 opacity-100"
+                  : "scale-75 opacity-0",
+              )}
+            />
+          ) : (
+            <ChevronRight
+              size={16}
+              className={cn(
+                "absolute transition-all duration-200",
+                showChevronIcon
+                  ? "scale-100 opacity-100"
+                  : "scale-75 opacity-0",
+              )}
+            />
+          )}
+        </span>
+        <span className="text-sm">代码生成失败</span>
+      </button>
+
+      {isOpen && error && (
+        <div className="animate-in fade-in slide-in-from-top-1 py-2 pl-1 duration-200">
+          <p className="border-l-2 border-red-400/20 pl-3 text-xs leading-relaxed text-red-500 dark:border-red-500/50 dark:text-red-400/80">
+            {error}
+          </p>
+        </div>
       )}
     </div>
-  ),
-);
+  );
+});
 
 ErrorState.displayName = "ErrorState";
 
@@ -519,7 +649,10 @@ const OutputContent = memo(({ output }: OutputContentProps) => {
       .join("\n\n");
   }, [files]);
 
-  const fileCount = Object.keys(files).length;
+  // Count only visible files (not hidden) - consistent with SandpackRenderer
+  const visibleFileCount = Object.values(files).filter(
+    (file) => !file.hidden,
+  ).length;
 
   // Copy all code to clipboard
   const handleCopy = useCallback(async () => {
@@ -543,9 +676,9 @@ const OutputContent = memo(({ output }: OutputContentProps) => {
             <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
               {template}
             </span>
-            {fileCount > 1 && (
+            {visibleFileCount > 1 && (
               <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-600 dark:bg-green-900/30 dark:text-green-400">
-                {fileCount} files
+                {visibleFileCount} files
               </span>
             )}
           </div>
@@ -587,19 +720,26 @@ export const ToolCodeSandbox = memo(
     const { state, title } = toolPart;
     const rawOutput = toolPart.output;
 
-    // Debug logging - can be removed in production
-    console.log("[ToolCodeSandbox] state:", state);
-    console.log("[ToolCodeSandbox] rawOutput:", rawOutput);
-    console.log("[ToolCodeSandbox] rawOutput type:", typeof rawOutput);
-
     // Handle loading/streaming states
     if (state === "input-streaming" || state === "input-available") {
-      return <>{isStreaming && <LoadingState title={title} />}</>;
+      return (
+        <>
+          {isStreaming && (
+            <CodeSkeletonLoader
+              title={
+                state === "input-streaming"
+                  ? "正在接收代码..."
+                  : "准备执行中..."
+              }
+            />
+          )}
+        </>
+      );
     }
 
     // Handle error state
     if (state === "output-error") {
-      return <ErrorState title={title} />;
+      return <ErrorState title={title} error={toolPart.errorText} />;
     }
 
     // Handle output available state
@@ -617,8 +757,6 @@ export const ToolCodeSandbox = memo(
       } else {
         output = rawOutput as CodeSandboxOutput | undefined;
       }
-
-      console.log("[ToolCodeSandbox] output:", output);
 
       if (!output || !output.files) {
         console.warn("[ToolCodeSandbox] Missing output or files:", output);

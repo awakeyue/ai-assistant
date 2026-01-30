@@ -138,3 +138,43 @@ button {
     display: none;
   }
 }
+
+/* Reasoning shimmer animation for deep thinking component */
+@keyframes reasoning-shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+.animate-reasoning-shimmer {
+  animation: reasoning-shimmer 1s ease-in-out infinite;
+}
+
+/* Shimmer loading animation - 文字闪光效果 */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    currentColor 0%,
+    currentColor 40%,
+    rgba(255, 255, 255, 0.9) 50%,
+    currentColor 60%,
+    currentColor 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: -100% 50%;
+  }
+}

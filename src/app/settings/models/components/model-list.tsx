@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { UserModelConfig } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2, Star, Plus, Bot, Lock } from "lucide-react";
+import { Trash2, Star, Plus, Bot, Lock, Loader2 } from "lucide-react";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -79,7 +80,11 @@ export default function ModelList({
   isLoading,
   selectedId,
 }: ModelListProps) {
+  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const handleDelete = async (id: string) => {
+    setDeletingId(id);
     try {
       const response = await fetch(`/api/models/${id}`, {
         method: "DELETE",
@@ -93,10 +98,13 @@ export default function ModelList({
       toast.success("模型已删除");
     } catch (error) {
       toast.error("删除模型失败");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const handleSetDefault = async (id: string) => {
+    setSettingDefaultId(id);
     try {
       const response = await fetch(`/api/models/${id}/default`, {
         method: "PUT",
@@ -110,6 +118,8 @@ export default function ModelList({
       toast.success("默认模型已设置");
     } catch (error) {
       toast.error("设置默认模型失败");
+    } finally {
+      setSettingDefaultId(null);
     }
   };
 
@@ -227,16 +237,20 @@ export default function ModelList({
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => handleSetDefault(model.id)}
-                    disabled={model.isDefault}
+                    disabled={model.isDefault || settingDefaultId === model.id}
                     title={model.isDefault ? "当前为默认模型" : "设为默认"}
                   >
-                    <Star
-                      className={`h-4 w-4 ${
-                        model.isDefault
-                          ? "fill-amber-500 text-amber-500"
-                          : "text-muted-foreground"
-                      }`}
-                    />
+                    {settingDefaultId === model.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Star
+                        className={`h-4 w-4 ${
+                          model.isDefault
+                            ? "fill-amber-500 text-amber-500"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    )}
                   </Button>
 
                   <AlertDialog>
@@ -246,8 +260,13 @@ export default function ModelList({
                         size="icon"
                         className="h-8 w-8"
                         title="删除"
+                        disabled={deletingId === model.id}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {deletingId === model.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>

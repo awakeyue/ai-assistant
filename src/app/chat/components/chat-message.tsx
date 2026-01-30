@@ -4,7 +4,7 @@ import { UIMessage } from "@ai-sdk/react";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { memo, useState, useCallback, useDeferredValue } from "react";
-import { FileUIPart, TextUIPart } from "ai";
+import { FileUIPart, ReasoningUIPart, TextUIPart } from "ai";
 import {
   ToolGomokuGame,
   ToolCurrentTime,
@@ -79,7 +79,7 @@ const ChatMessage = memo(
     }, [textContent]);
 
     const messageContent = (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0">
         {message.parts.map((part, idx) => {
           const key =
             "toolCallId" in part ? part.toolCallId : `${part.type}-${idx}`;
@@ -97,7 +97,7 @@ const ChatMessage = memo(
               return (
                 <ReasoningBlock
                   key={key}
-                  text={part.text}
+                  reasonPart={part}
                   isStreaming={!!isStreaming}
                 />
               );
@@ -121,7 +121,7 @@ const ChatMessage = memo(
               return null;
           }
         })}
-        {isStreaming && <StreamingDots />}
+        {isStreaming && <StreamingDots className="pt-2" />}
       </div>
     );
 
@@ -224,43 +224,102 @@ ChatMessage.displayName = "ChatMessage";
 export default ChatMessage;
 
 // --- 1. 推理/思考块组件 (Reasoning Block) ---
-function ReasoningBlock({
-  text,
-  isStreaming,
-}: {
-  text: string;
-  isStreaming: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(true);
+const ReasoningBlock = memo(
+  ({
+    reasonPart,
+    isStreaming,
+  }: {
+    reasonPart: ReasoningUIPart;
+    isStreaming: boolean;
+  }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const text = reasonPart.text;
 
-  if (!text) return null;
+    if (!text) return null;
 
-  return (
-    <div className="block-fade-in my-2 rounded-lg border border-amber-100 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/10">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center gap-2 rounded-t-lg px-3 py-2 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-100/50"
-      >
-        <BrainCircuit
-          size={14}
-          className={cn(isStreaming && "animate-pulse")}
-        />
-        <span>思考过程</span>
-        <span className="ml-auto text-amber-400">
-          {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        </span>
-      </button>
+    const isReasoning = reasonPart.state === "streaming" && isStreaming;
+    const showBrainIcon = !isOpen && !isHovered;
+    const showChevronIcon = isHovered || isOpen;
 
-      {isOpen && (
-        <div className="animate-in fade-in slide-in-from-top-1 border-t border-amber-100 px-3 py-2 duration-200">
-          <div className="prose prose-sm max-w-none font-mono text-xs leading-relaxed text-gray-600 dark:text-gray-300">
-            {text}
+    return (
+      <div className="block-fade-in my-2">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="group flex w-full gap-1 py-1 text-gray-400 transition-colors hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
+        >
+          {/* Icon container with smooth transition */}
+          <span className="relative flex w-3.5 items-center justify-center">
+            {/* Brain icon - visible when collapsed, not hovered, not streaming */}
+            <BrainCircuit
+              size={14}
+              className={cn(
+                "absolute text-gray-400 transition-all duration-200 dark:text-gray-500",
+                showBrainIcon ? "scale-100 opacity-100" : "scale-75 opacity-0",
+              )}
+            />
+            {/* Chevron icon - visible when hovered or expanded */}
+            {isOpen ? (
+              <ChevronDown
+                size={16}
+                className={cn(
+                  "absolute text-gray-400 transition-all duration-200 dark:text-gray-500",
+                  showChevronIcon
+                    ? "scale-100 opacity-100"
+                    : "scale-75 opacity-0",
+                )}
+              />
+            ) : (
+              <ChevronRight
+                size={16}
+                className={cn(
+                  "absolute text-gray-400 transition-all duration-200 dark:text-gray-500",
+                  showChevronIcon
+                    ? "scale-100 opacity-100"
+                    : "scale-75 opacity-0",
+                )}
+              />
+            )}
+          </span>
+          {/* Text with loading animation */}
+          <span
+            className={cn(
+              isReasoning && "shimmer text-zinc-500 dark:text-gray-400",
+            )}
+          >
+            {isReasoning ? "深度思考中..." : "思考过程"}
+          </span>
+        </button>
+
+        {isOpen && (
+          <div className="animate-in fade-in slide-in-from-top-1 py-2 pl-1 duration-200">
+            <div className="prose prose-sm max-w-none border-l border-gray-200 pl-3 font-mono text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+              <div
+                className="markdown-body"
+                style={{
+                  contain: "content",
+                  contentVisibility: "auto",
+                  containIntrinsicSize: "0 100px",
+                  minHeight: "1.5em",
+                }}
+              >
+                <ReactMarkdown
+                  remarkPlugins={remarkPlugins}
+                  components={markdownComponents}
+                >
+                  {text}
+                </ReactMarkdown>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
+        )}
+      </div>
+    );
+  },
+);
+ReasoningBlock.displayName = "ReasoningBlock";
 
 // --- 2. 文件展示组件 (File Block) ---
 const FileBlock = memo(({ filePart }: { filePart: FileUIPart }) => {

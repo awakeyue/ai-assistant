@@ -1,7 +1,12 @@
-export function StreamingDots() {
+import { cn } from "@/lib/utils";
+
+export function StreamingDots({ className }: { className?: string }) {
   return (
     <div
-      className={"text-muted-foreground inline-flex items-center gap-2 text-sm"}
+      className={cn(
+        "text-muted-foreground inline-flex items-center gap-2 text-sm",
+        className,
+      )}
     >
       <div className="flex gap-1">
         {[...Array(3)].map((_, i) => (
