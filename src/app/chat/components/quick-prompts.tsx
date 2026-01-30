@@ -21,7 +21,7 @@ interface QuickPrompt {
 const quickPrompts: QuickPrompt[] = [
   {
     icon: <Code2 className="h-4 w-4" />,
-    title: "生成react动画按钮",
+    title: "生成react按钮组件",
     prompt:
       "使用 React + Tailwind CSS + TypeScript，帮我实现一个现代风格的按钮组件，并使用沙盒预览",
     isToolTrigger: true,
