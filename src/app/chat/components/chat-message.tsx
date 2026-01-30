@@ -249,7 +249,7 @@ const ReasoningBlock = memo(
           onClick={() => setIsOpen(!isOpen)}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="group flex w-full gap-1 py-1 text-gray-400 transition-colors hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
+          className="group flex w-full items-center gap-1 py-1 text-gray-400 transition-colors hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
         >
           {/* Icon container with smooth transition */}
           <span className="relative flex w-3.5 items-center justify-center">

@@ -281,7 +281,7 @@ export default function InputBox({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          disabled={externalDisabled}
+          disabled={status !== "ready" || externalDisabled}
           placeholder={
             externalDisabled
               ? "加载中..."

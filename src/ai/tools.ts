@@ -39,20 +39,42 @@ export const currentTimeTool = createTool({
   inputSchema: z.object({}),
   execute: async () => {
     const now = new Date();
+    // Use Asia/Shanghai timezone to ensure correct local time regardless of server location
+    const timeZone = "Asia/Shanghai";
+
+    // Get formatted date with timezone
+    const formattedDate = now.toLocaleDateString("zh-CN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "long",
+      timeZone,
+    });
+
+    // Get time components with correct timezone
+    const timeFormatter = new Intl.DateTimeFormat("zh-CN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+      timeZone,
+    });
+    const timeParts = timeFormatter.formatToParts(now);
+    const hours = timeParts.find((p) => p.type === "hour")?.value ?? "00";
+    const minutes = timeParts.find((p) => p.type === "minute")?.value ?? "00";
+    const seconds = timeParts.find((p) => p.type === "second")?.value ?? "00";
+
     return {
       // Formatted date string for display
-      formattedDate: now.toLocaleDateString("zh-CN", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        weekday: "long",
-      }),
+      formattedDate,
       // Time components for display
-      hours: now.getHours().toString().padStart(2, "0"),
-      minutes: now.getMinutes().toString().padStart(2, "0"),
-      seconds: now.getSeconds().toString().padStart(2, "0"),
-      // ISO string for reference
+      hours,
+      minutes,
+      seconds,
+      // ISO string for reference (still in UTC for standardization)
       timestamp: now.toISOString(),
+      // Timezone info
+      timeZone,
     };
   },
 });
