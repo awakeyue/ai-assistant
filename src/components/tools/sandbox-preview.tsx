@@ -219,6 +219,9 @@ function processFiles(
     }
   }
 
+  // Note: Tailwind CSS injection is handled via externalResources in SandpackProvider
+  // The HTML file injection approach doesn't work for bundled templates (react, vue, etc.)
+
   if (!hasActiveFile) {
     const firstKey = Object.keys(processedFiles)[0];
     if (firstKey) {
@@ -352,6 +355,27 @@ ActionButtons.displayName = "ActionButtons";
 // Main Sandpack Renderer (Exported)
 // =============================================================================
 
+/**
+ * Check if Tailwind CSS should be injected via CDN
+ */
+function shouldInjectTailwind(
+  files: Record<string, SandpackFileConfig>,
+  dependencies?: Record<string, string>,
+): boolean {
+  // Check if tailwindcss is in dependencies
+  const hasTailwindDependency =
+    dependencies &&
+    (Object.keys(dependencies).some((dep) => dep.includes("tailwindcss")) ||
+      dependencies["tailwindcss"]);
+
+  // Check if any file already contains the Tailwind CDN
+  const hasTailwindCDN = Object.values(files).some((file) =>
+    file.code.includes("cdn.tailwindcss.com"),
+  );
+
+  return !!hasTailwindDependency && !hasTailwindCDN;
+}
+
 export interface SandpackRendererProps {
   files: Record<string, SandpackFileConfig>;
   template: SupportedTemplate;
@@ -423,6 +447,14 @@ export const SandpackRenderer = memo(
       return { dependencies };
     }, [dependencies]);
 
+    // Determine if we need to inject Tailwind via external resources
+    const externalResources = useMemo(() => {
+      if (shouldInjectTailwind(files, dependencies)) {
+        return ["https://cdn.tailwindcss.com"];
+      }
+      return undefined;
+    }, [files, dependencies]);
+
     return (
       <div
         ref={containerRef}
@@ -434,7 +466,7 @@ export const SandpackRenderer = memo(
           customSetup={customSetup}
           theme="dark"
           options={{
-            externalResources: ["https://cdn.tailwindcss.com"],
+            externalResources,
           }}
         >
           <Tabs

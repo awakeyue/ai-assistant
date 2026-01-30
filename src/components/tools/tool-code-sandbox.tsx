@@ -8,6 +8,8 @@ import {
   ChevronDown,
   ChevronRight,
   Share2,
+  Copy,
+  Check,
 } from "lucide-react";
 import { CodeSkeletonLoader } from "../custom/code-loading";
 import { cn } from "@/lib/utils";
@@ -29,9 +31,21 @@ LoadingState.displayName = "LoadingState";
 const ErrorState = memo(({ error }: { title?: string; error?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const showAlertIcon = !isOpen && !isHovered;
   const showChevronIcon = isHovered || isOpen;
+
+  const handleCopy = async () => {
+    if (!error) return;
+    try {
+      await navigator.clipboard.writeText(error);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
   return (
     <div className="block-fade-in my-2">
@@ -78,8 +92,19 @@ const ErrorState = memo(({ error }: { title?: string; error?: string }) => {
       </button>
 
       {isOpen && error && (
-        <div className="animate-in fade-in slide-in-from-top-1 py-2 pl-1 duration-200">
-          <p className="border-l-2 border-red-400/20 pl-3 text-xs leading-relaxed text-red-500 dark:border-red-500/50 dark:text-red-400/80">
+        <div className="animate-in fade-in slide-in-from-top-1 relative py-2 pl-1 duration-200">
+          <button
+            onClick={handleCopy}
+            className="absolute top-2 right-0 flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-red-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+            title="复制错误信息"
+          >
+            {copied ? (
+              <Check size={12} className="text-green-500" />
+            ) : (
+              <Copy size={12} />
+            )}
+          </button>
+          <p className="border-l-2 border-red-400/20 pr-8 pl-3 text-xs leading-relaxed text-red-500 dark:border-red-500/50 dark:text-red-400/80">
             {error}
           </p>
         </div>
@@ -120,7 +145,7 @@ interface OutputContentProps {
 
 const OutputContent = memo(
   ({ output, chatId, messageId }: OutputContentProps) => {
-    const { title: outputTitle, template } = output;
+    const { template } = output;
 
     // Count only visible files (not hidden)
     const visibleFileCount = Object.values(output.files).filter(
@@ -139,6 +164,7 @@ const OutputContent = memo(
     };
 
     const canShare = !!chatId && !!messageId;
+    console.log(output);
 
     return (
       <div className="block-fade-in my-3 w-full">
@@ -147,7 +173,6 @@ const OutputContent = memo(
           <div className="flex items-center justify-between border-b border-gray-200/50 bg-white/50 px-4 py-2 dark:border-gray-700/50 dark:bg-gray-800/50">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300">
               <Play size={16} className="text-blue-500" />
-              <span>{outputTitle}</span>
               <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                 {template}
               </span>
