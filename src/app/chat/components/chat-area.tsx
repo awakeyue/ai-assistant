@@ -384,6 +384,7 @@ export default function ChatArea({
               <div key={message.id} className="pt-4 pb-8">
                 <ChatMessage
                   message={message}
+                  chatId={stableId}
                   onRetry={handleRetry}
                   onDelete={handleDelete}
                   isLoading={status === "streaming"}

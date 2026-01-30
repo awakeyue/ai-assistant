@@ -8,7 +8,6 @@ import { FileUIPart, ReasoningUIPart, TextUIPart } from "ai";
 import {
   ToolGomokuGame,
   ToolCurrentTime,
-  ToolSvgPreview,
   ToolCodeSandbox,
 } from "@/components/tools";
 import Image from "next/image";
@@ -41,6 +40,7 @@ import { StreamingDots } from "@/components/custom/streaming-dots";
 
 interface ChatMessageProps {
   message: UIMessage;
+  chatId?: string; // Chat ID for sharing functionality
   // 新增 Props
   onRetry?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -52,6 +52,7 @@ interface ChatMessageProps {
 const ChatMessage = memo(
   ({
     message,
+    chatId,
     onRetry,
     onDelete,
     isLoading,
@@ -107,14 +108,14 @@ const ChatMessage = memo(
               return <ToolGomokuGame key={key} toolPart={part} />;
             case "tool-currentTime":
               return <ToolCurrentTime key={key} toolPart={part} />;
-            case "tool-svgPreview":
-              return <ToolSvgPreview key={key} toolPart={part} />;
             case "tool-codeSandbox":
               return (
                 <ToolCodeSandbox
                   key={key}
                   toolPart={part}
                   isStreaming={!!isStreaming}
+                  chatId={chatId}
+                  messageId={message.id}
                 />
               );
             default:

@@ -57,22 +57,6 @@ export const currentTimeTool = createTool({
   },
 });
 
-export const svgPreviewTool = createTool({
-  title: "SVG 图形预览",
-  description:
-    "生成并实时预览 SVG 矢量图。当用户要求画图、生成图形、创建图标、绘制矢量图时使用此工具。例如：'画一只猫'、'生成一个心形图标'、'画一个带动画的loading图标'。",
-  inputSchema: z.object({
-    code: z.string().describe("要渲染的 SVG 代码，必须以 <svg 开头"),
-    title: z.string().optional().describe("可选的标题，用于描述生成的内容"),
-  }),
-  execute: async ({ code, title }) => {
-    return {
-      code,
-      title: title || "SVG 图形",
-    };
-  },
-});
-
 export const codeSandboxTool = createTool({
   title: "代码沙盒预览",
   description: `交互式代码沙盒工具，用于实时预览和运行代码。
@@ -80,19 +64,24 @@ export const codeSandboxTool = createTool({
 【何时使用此工具】
 - 用户明确要求"预览"、"实时预览"、"运行"、"沙盒"效果
 - 用户要求创建可交互的 demo、示例、原型
+- 用户要求画图、生成图形、创建图标、绘制 SVG 矢量图（使用 static 模板）
 
 【何时不使用此工具】
 - 用户只是要求"写代码"、"生成代码"但没提预览 → 直接用 markdown 代码块返回
 - 用户要求解释代码或代码审查 → 不使用此工具
 
 【支持的模板类型】
-1. "static" - 纯 HTML/CSS/JS（推荐用于简单页面、不需要框架的场景）
+1. "static" - 纯 HTML/CSS/JS（推荐用于简单页面、SVG 图形预览、不需要框架的场景）
 2. "react" / "react-ts" - React 项目（默认）
 3. "vue" / "vue-ts" - Vue 3 项目
 4. "vanilla" / "vanilla-ts" - 纯 JavaScript/TypeScript
 
+【SVG 图形预览】
+当用户要求画图、生成 SVG 时，使用 template: "static"，将 SVG 代码嵌入 HTML 中：
+{ "/index.html": { code: "<!DOCTYPE html><html><body style='display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0'><svg>...</svg></body></html>", active: true } }
+
 【重要规则】
-1. 对于简单 HTML 页面，必须使用 template: "static"，入口文件为 /index.html
+1. 对于简单 HTML 页面和 SVG 预览，必须使用 template: "static"，入口文件为 /index.html
 2. React 项目入口文件是 /App.js 或 /App.tsx
 3. Vue 项目入口文件是 /src/App.vue
 4. Vanilla 项目入口文件是 /index.js 或 /index.ts
@@ -160,6 +149,5 @@ export const codeSandboxTool = createTool({
 export const tools = {
   gomokuGame: gomokuTool,
   currentTime: currentTimeTool,
-  svgPreview: svgPreviewTool,
   codeSandbox: codeSandboxTool,
 };

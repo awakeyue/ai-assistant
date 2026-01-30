@@ -21,38 +21,39 @@ interface QuickPrompt {
 const quickPrompts: QuickPrompt[] = [
   {
     icon: <Code2 className="h-4 w-4" />,
-    title: "写一个react组件，并使用沙盒预览",
+    title: "✨ 生成react动画按钮",
     prompt:
-      "使用react + tailwind css + ts，帮我实现一个现代风格的loading组件，并使用沙盒预览",
+      "使用 React + Tailwind CSS + TypeScript，帮我实现一个现代风格的按钮组件，并使用沙盒预览",
     isToolTrigger: true,
   },
   {
     icon: <Gamepad2 className="h-4 w-4" />,
-    title: "我想下五子棋！",
-    prompt: "我想下五子棋！",
+    title: "🎮 来局五子棋",
+    prompt: "和我一起下局五子棋",
     isToolTrigger: true,
   },
   {
     icon: <Brush className="h-4 w-4" />,
-    title: "画一个svg图标",
-    prompt: "用svg画一个带动画的loading图标",
+    title: "🎨 动态 SVG 图案",
+    prompt: "用 SVG 画一个带有动画效果的渐变圆环加载指示器，并使用沙盒预览",
     isToolTrigger: true,
   },
   {
     icon: <Timer className="h-4 w-4" />,
-    title: "现在几点了？",
-    prompt: "现在几点了？",
+    title: "⏰ 查询当前时间",
+    prompt: "现在是什么时间？请告诉我当前的日期和时间",
     isToolTrigger: true,
   },
   {
     icon: <Lightbulb className="h-4 w-4" />,
-    title: "帮我想个点子",
-    prompt: "帮我想一个有创意的项目点子，可以用来学习编程",
+    title: "💡 周末项目灵感",
+    prompt: "推荐一个适合周末完成的有趣编程项目，最好能学到新技术且有成就感",
   },
   {
     icon: <Code className="h-4 w-4" />,
-    title: "代码解释",
-    prompt: "请解释一下 React 中 useEffect 的依赖数组是如何工作的？",
+    title: "🔍 React Hooks 详解",
+    prompt:
+      "用简单易懂的例子解释 React 中 useEffect 和 useMemo 的区别，以及什么时候该用哪个？",
   },
 ];
 
