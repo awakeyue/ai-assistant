@@ -360,13 +360,9 @@ export default function ChatArea({
   return (
     <div className="relative mx-auto flex h-full w-full max-w-5xl flex-1 flex-col overflow-hidden p-2 pt-4">
       {messages.length === 0 ? (
-        <div className="flex h-full flex-1 items-center justify-center">
-          <EmptyState>
-            <QuickPrompts
-              onSelect={(prompt) => handleSendMessage(prompt, [])}
-            />
-          </EmptyState>
-        </div>
+        <EmptyState>
+          <QuickPrompts onSelect={(prompt) => handleSendMessage(prompt, [])} />
+        </EmptyState>
       ) : (
         <div
           className="min-h-0 w-full flex-1"

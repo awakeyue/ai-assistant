@@ -64,12 +64,12 @@ interface QuickPromptsProps {
 
 export function QuickPrompts({ onSelect, className }: QuickPromptsProps) {
   return (
-    <div className={cn("flex min-h-0 w-full flex-1 flex-col", className)}>
+    <div className={cn("flex w-full flex-col", className)}>
       <div className="text-muted-foreground mb-3 flex shrink-0 items-center justify-center gap-2 text-sm">
         <Sparkles className="h-4 w-4" />
         <span>试试这些</span>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div>
         <div className="grid grid-cols-1 gap-2 px-4 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 sm:px-0">
           {quickPrompts.map((item, index) => (
             <button

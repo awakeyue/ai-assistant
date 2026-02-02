@@ -5,10 +5,10 @@ interface EmptyStateProps {
   children?: ReactNode;
 }
 
-export default function ChatEmptyState2({ children }: EmptyStateProps) {
+export default function ChatEmptyState({ children }: EmptyStateProps) {
   return (
-    <div className="flex h-full w-full items-center justify-center px-4">
-      <div className="flex max-w-lg flex-col items-center text-center">
+    <div className="flex min-h-0 w-full flex-1 justify-center overflow-auto px-4 py-8">
+      <div className="m-auto flex max-w-lg flex-col items-center text-center">
         <div className="relative mb-8">
           <div className="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
             <MessageSquare className="text-primary h-8 w-8" strokeWidth={2} />
