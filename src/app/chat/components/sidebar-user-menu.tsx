@@ -1,6 +1,14 @@
 "use client";
 
-import { LogOut, User, Settings2, Sun, Moon, Monitor } from "lucide-react";
+import {
+  LogOut,
+  User,
+  Settings2,
+  Sun,
+  Moon,
+  Monitor,
+  LayoutGrid,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,6 +113,13 @@ export default function SidebarUserMenu({
           >
             <Settings2 size={16} />
             模型管理
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => (window.location.href = "/gallery")}
+            className="flex cursor-pointer items-center gap-2"
+          >
+            <LayoutGrid size={16} />
+            沙盒广场
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="flex cursor-pointer items-center gap-2">
