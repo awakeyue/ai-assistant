@@ -6,7 +6,7 @@ import { SandboxCard } from "@/components/gallery/sandbox-card";
 import { GalleryPagination } from "@/components/gallery/pagination";
 import { GalleryEmptyState } from "@/components/gallery/empty-state";
 import { TemplateFilter } from "@/components/gallery/template-filter";
-import { LayoutGrid, Home } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { SupportedTemplate } from "@/components/tools/sandbox-preview";
 import type { Metadata } from "next";
 
@@ -46,36 +46,31 @@ export default async function GalleryPage({ searchParams }: GalleryPageProps) {
   const { items, pagination, isAdmin } = result;
 
   return (
-    <div className="flex h-lvh flex-col bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
+    <div className="bg-background flex h-lvh flex-col">
       {/* Header */}
-      <header className="shrink-0 border-b border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80">
+      <header className="bg-background/80 shrink-0 border-b backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Home Link */}
-              <Link
-                href="/"
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-                title="返回首页"
-              >
-                <Home size={20} />
-              </Link>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-purple-600 text-white shadow-lg">
-                <LayoutGrid size={20} />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                  沙盒广场
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {isAdmin ? "管理所有用户的代码沙盒" : "浏览我的代码沙盒作品"}
-                </p>
-              </div>
+            <div className="flex flex-col gap-1">
+              {/* Breadcrumb Navigation */}
+              <nav className="flex items-center gap-1.5 text-sm">
+                <Link
+                  href="/"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  首页
+                </Link>
+                <ChevronRight className="text-muted-foreground/50 h-4 w-4" />
+                <span className="text-foreground font-medium">沙盒广场</span>
+              </nav>
+              <p className="text-muted-foreground text-sm">
+                {isAdmin ? "管理所有用户的代码沙盒" : "浏览我的代码沙盒作品"}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <TemplateFilter currentTemplate={template} />
               {isAdmin && (
-                <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-400">
+                <span className="bg-primary/10 text-primary rounded-full px-3 py-1 text-xs font-medium">
                   管理员
                 </span>
               )}
@@ -109,7 +104,7 @@ export default async function GalleryPage({ searchParams }: GalleryPageProps) {
             )}
 
             {/* Stats */}
-            <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-muted-foreground mt-6 text-center text-sm">
               共 {pagination.total} 个沙盒 · 第 {pagination.page} /{" "}
               {pagination.totalPages} 页
             </div>

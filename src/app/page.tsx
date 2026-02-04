@@ -13,9 +13,17 @@ import {
   ArrowRight,
   Bot,
   Cpu,
+  LayoutGrid,
+  Code2,
+  Gamepad2,
+  Share2,
 } from "lucide-react";
+import { getCurrentUser } from "@/actions/auth";
+import HeaderUserMenu from "@/app/components/header-user-menu";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+
   return (
     <div className="bg-background flex h-full flex-col overflow-y-auto">
       {/* Header */}
@@ -28,12 +36,13 @@ export default function Home() {
             <span className="font-semibold">AI Assistant</span>
           </div>
           <nav className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login">登录</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href="/chat">开始使用</Link>
-            </Button>
+            {user ? (
+              <HeaderUserMenu user={user} />
+            ) : (
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">登录</Link>
+              </Button>
+            )}
           </nav>
         </div>
       </header>
@@ -61,7 +70,7 @@ export default function Home() {
             <p className="text-muted-foreground mb-8 max-w-2xl text-lg">
               自由配置您喜欢的 AI 模型，使用自己的 API
               密钥，享受无限制的智能对话体验。 支持 OpenAI、Claude、Gemini
-              等主流大模型。
+              等主流大模型，内置代码沙盒和 AI 工具。
             </p>
 
             {/* CTA Buttons */}
@@ -73,9 +82,9 @@ export default function Home() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="gap-2">
-                <Link href="/settings/models">
-                  <Settings2 className="h-4 w-4" />
-                  配置模型
+                <Link href="/gallery">
+                  <LayoutGrid className="h-4 w-4" />
+                  沙盒广场
                 </Link>
               </Button>
             </div>
@@ -126,22 +135,53 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Feature 3 */}
+              {/* Feature 3 - Code Sandbox */}
               <Card className="border-muted bg-background/60 backdrop-blur">
                 <CardContent className="p-6">
                   <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
-                    <Settings2 className="text-primary h-6 w-6" />
+                    <Code2 className="text-primary h-6 w-6" />
                   </div>
                   <h3 className="text-foreground mb-2 text-lg font-semibold">
-                    自定义参数
+                    代码沙盒
                   </h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    灵活调整模型温度、最大 Token、系统提示词等参数，打造专属体验
+                    AI 生成的代码可直接在浏览器中运行预览，支持
+                    React、Vue、TypeScript 等多种模板
                   </p>
                 </CardContent>
               </Card>
 
-              {/* Feature 4 */}
+              {/* Feature 4 - AI Tools */}
+              <Card className="border-muted bg-background/60 backdrop-blur">
+                <CardContent className="p-6">
+                  <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
+                    <Gamepad2 className="text-primary h-6 w-6" />
+                  </div>
+                  <h3 className="text-foreground mb-2 text-lg font-semibold">
+                    AI 工具集成
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    内置五子棋游戏、时间查询等 AI 工具，让对话更加丰富有趣
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Feature 5 - Gallery & Share */}
+              <Card className="border-muted bg-background/60 backdrop-blur">
+                <CardContent className="p-6">
+                  <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
+                    <Share2 className="text-primary h-6 w-6" />
+                  </div>
+                  <h3 className="text-foreground mb-2 text-lg font-semibold">
+                    沙盒分享
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    浏览和分享代码沙盒作品，查看他人创作，获取灵感与学习
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Feature 6 */}
               <Card className="border-muted bg-background/60 backdrop-blur">
                 <CardContent className="p-6">
                   <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
@@ -156,7 +196,7 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Feature 5 */}
+              {/* Feature 7 */}
               <Card className="border-muted bg-background/60 backdrop-blur">
                 <CardContent className="p-6">
                   <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
@@ -171,7 +211,7 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Feature 6 */}
+              {/* Feature 8 */}
               <Card className="border-muted bg-background/60 backdrop-blur">
                 <CardContent className="p-6">
                   <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
@@ -182,6 +222,21 @@ export default function Home() {
                   </h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     自动保存所有对话历史，跨设备同步，随时回顾和继续之前的对话
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Feature 9 */}
+              <Card className="border-muted bg-background/60 backdrop-blur">
+                <CardContent className="p-6">
+                  <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
+                    <Settings2 className="text-primary h-6 w-6" />
+                  </div>
+                  <h3 className="text-foreground mb-2 text-lg font-semibold">
+                    自定义参数
+                  </h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    灵活调整模型温度、最大 Token、系统提示词等参数，打造专属体验
                   </p>
                 </CardContent>
               </Card>
@@ -235,11 +290,17 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-12 flex justify-center">
+            <div className="mt-12 flex justify-center gap-4">
               <Button asChild size="lg" className="gap-2">
                 <Link href="/chat">
                   立即体验
                   <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="gap-2">
+                <Link href="/settings/models">
+                  <Settings2 className="h-4 w-4" />
+                  配置模型
                 </Link>
               </Button>
             </div>

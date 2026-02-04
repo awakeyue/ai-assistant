@@ -1,9 +1,9 @@
-import { LayoutGrid } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function SandboxCardSkeleton() {
   return (
-    <div className="h-full rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800/50">
+    <div className="bg-card border-border h-full rounded-lg border p-3">
       {/* Preview Area */}
       <Skeleton className="mb-3 aspect-video w-full rounded-lg" />
 
@@ -27,23 +27,19 @@ function SandboxCardSkeleton() {
 
 export default function GalleryLoading() {
   return (
-    <div className="flex h-lvh flex-col bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
+    <div className="bg-background flex h-lvh flex-col">
       {/* Header */}
-      <header className="shrink-0 border-b border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80">
+      <header className="bg-background/80 shrink-0 border-b backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-purple-600 text-white shadow-lg">
-                <LayoutGrid size={20} />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                  沙盒广场
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  加载中...
-                </p>
-              </div>
+            <div className="flex flex-col gap-1">
+              {/* Breadcrumb Navigation */}
+              <nav className="flex items-center gap-1.5 text-sm">
+                <span className="text-muted-foreground">首页</span>
+                <ChevronRight className="text-muted-foreground/50 h-4 w-4" />
+                <span className="text-foreground font-medium">沙盒广场</span>
+              </nav>
+              <p className="text-muted-foreground text-sm">加载中...</p>
             </div>
             <div className="flex items-center gap-3">
               <Skeleton className="h-10 w-40 rounded-md" />

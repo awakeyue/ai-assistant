@@ -6,7 +6,7 @@ A modern AI chat assistant application built with Next.js 16, Prisma ORM, and Su
 
 ## Features
 
-- 🤖 **Multi-Model Support** - Seamlessly switch between different AI models (OpenAI, Claude, etc.)
+- 🤖 **Multi-Model Support** - Seamlessly switch between different AI models (OpenAI, Claude, Gemini, etc.)
 - 💬 **Real-time Streaming** - Smooth typing effect with server-sent events
 - 🔐 **Secure Authentication** - GitHub OAuth and email login via Supabase Auth
 - 📝 **Chat History** - Persistent conversation storage with PostgreSQL
@@ -14,6 +14,10 @@ A modern AI chat assistant application built with Next.js 16, Prisma ORM, and Su
 - 🎨 **Modern UI** - Clean, responsive design with dark mode support
 - ⚡ **Fast & Optimized** - Server components, streaming, and edge-ready architecture
 - 🔄 **Auto-sync** - Real-time data synchronization across devices
+- 🧪 **Code Sandbox** - Run AI-generated code directly in browser with React, Vue, TypeScript support
+- 🎮 **AI Tools** - Built-in tools like Gomoku game and time query for interactive experiences
+- 🖼️ **Sandbox Gallery** - Browse and share code sandbox creations with the community
+- 🔗 **Share Feature** - Share your sandbox works with others via unique links
 
 ## Tech Stack
 
@@ -24,6 +28,7 @@ A modern AI chat assistant application built with Next.js 16, Prisma ORM, and Su
 - **AI SDK**: Vercel AI SDK
 - **UI Components**: Radix UI + Tailwind CSS
 - **State Management**: Zustand
+- **Code Sandbox**: [Sandpack](https://sandpack.codesandbox.io/) by CodeSandbox
 
 ## Getting Started
 
@@ -196,10 +201,16 @@ ai-assistant/
 │   ├── app/               # Next.js App Router
 │   │   ├── api/           # API routes
 │   │   ├── chat/          # Chat pages
+│   │   ├── gallery/       # Sandbox gallery pages
 │   │   ├── login/         # Auth pages
-│   │   └── settings/      # Settings pages
+│   │   ├── settings/      # Settings pages
+│   │   └── share/         # Share pages
 │   ├── actions/           # Server actions
 │   ├── components/        # React components
+│   │   ├── custom/        # Custom UI components
+│   │   ├── gallery/       # Gallery components
+│   │   ├── tools/         # AI tool components (sandbox, gomoku, etc.)
+│   │   └── ui/            # Shadcn UI components
 │   ├── generated/prisma/  # Generated Prisma Client
 │   ├── hooks/             # Custom React hooks
 │   ├── store/             # Zustand stores
@@ -214,6 +225,7 @@ ai-assistant/
 - **Chat**: Chat sessions with title and model configuration
 - **Message**: Individual messages in a chat
 - **UserModel**: Custom AI model configurations per user
+- **Sandbox**: Code sandbox creations linked to chat messages
 
 ## License
 

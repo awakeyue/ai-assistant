@@ -6,7 +6,7 @@
 
 ## 功能特色
 
-- 🤖 **多模型支持** - 无缝切换不同的 AI 模型（OpenAI、Claude 等）
+- 🤖 **多模型支持** - 无缝切换不同的 AI 模型（OpenAI、Claude、Gemini 等）
 - 💬 **实时流式输出** - 基于 SSE 的流畅打字效果
 - 🔐 **安全认证** - 通过 Supabase Auth 支持 GitHub OAuth 和邮箱登录
 - 📝 **聊天历史** - 使用 PostgreSQL 持久化存储对话记录
@@ -14,6 +14,10 @@
 - 🎨 **现代化界面** - 简洁响应式设计，支持深色模式
 - ⚡ **高性能优化** - 服务端组件、流式传输、边缘就绪架构
 - 🔄 **自动同步** - 跨设备实时数据同步
+- 🧪 **代码沙盒** - AI 生成的代码可直接在浏览器中运行，支持 React、Vue、TypeScript 等模板
+- 🎮 **AI 工具集成** - 内置五子棋游戏、时间查询等工具，提供丰富的交互体验
+- 🖼️ **沙盒广场** - 浏览和分享代码沙盒作品，与社区互动
+- 🔗 **分享功能** - 通过唯一链接分享您的沙盒作品
 
 ## 技术栈
 
@@ -24,6 +28,7 @@
 - **AI SDK**: Vercel AI SDK
 - **UI 组件**: Radix UI + Tailwind CSS
 - **状态管理**: Zustand
+- **代码沙盒**: [Sandpack](https://sandpack.codesandbox.io/) by CodeSandbox
 
 ## 快速开始
 
@@ -196,10 +201,16 @@ ai-assistant/
 │   ├── app/               # Next.js App Router
 │   │   ├── api/           # API 路由
 │   │   ├── chat/          # 聊天页面
+│   │   ├── gallery/       # 沙盒广场页面
 │   │   ├── login/         # 认证页面
-│   │   └── settings/      # 设置页面
+│   │   ├── settings/      # 设置页面
+│   │   └── share/         # 分享页面
 │   ├── actions/           # Server Actions
 │   ├── components/        # React 组件
+│   │   ├── custom/        # 自定义 UI 组件
+│   │   ├── gallery/       # 沙盒广场组件
+│   │   ├── tools/         # AI 工具组件 (沙盒、五子棋等)
+│   │   └── ui/            # Shadcn UI 组件
 │   ├── generated/prisma/  # 生成的 Prisma Client
 │   ├── hooks/             # 自定义 React Hooks
 │   ├── store/             # Zustand 状态管理
@@ -214,6 +225,7 @@ ai-assistant/
 - **Chat**: 聊天会话，包含标题和模型配置
 - **Message**: 聊天中的单条消息
 - **UserModel**: 用户自定义的 AI 模型配置
+- **Sandbox**: 代码沙盒作品，与聊天消息关联
 
 ## 许可证
 
