@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/actions/auth";
 import { getGallerySandboxes } from "@/actions/gallery";
@@ -5,7 +6,7 @@ import { SandboxCard } from "@/components/gallery/sandbox-card";
 import { GalleryPagination } from "@/components/gallery/pagination";
 import { GalleryEmptyState } from "@/components/gallery/empty-state";
 import { TemplateFilter } from "@/components/gallery/template-filter";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, Home } from "lucide-react";
 import type { SupportedTemplate } from "@/components/tools/sandbox-preview";
 import type { Metadata } from "next";
 
@@ -51,6 +52,14 @@ export default async function GalleryPage({ searchParams }: GalleryPageProps) {
         <div className="mx-auto max-w-7xl px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Home Link */}
+              <Link
+                href="/"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                title="返回首页"
+              >
+                <Home size={20} />
+              </Link>
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-purple-600 text-white shadow-lg">
                 <LayoutGrid size={20} />
               </div>

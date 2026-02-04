@@ -1,14 +1,16 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTransition } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface GalleryPaginationProps {
   currentPage: number;
@@ -21,7 +23,9 @@ export function GalleryPagination({
   totalPages,
   template,
 }: GalleryPaginationProps) {
+  const router = useRouter();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
   // Build URL with pagination and filters
   const buildUrl = (page: number) => {
@@ -31,6 +35,13 @@ export function GalleryPagination({
       params.set("template", template);
     }
     return `${pathname}?${params.toString()}`;
+  };
+
+  // Navigate to page with transition
+  const navigateToPage = (page: number) => {
+    startTransition(() => {
+      router.push(buildUrl(page));
+    });
   };
 
   // Generate page numbers to display
@@ -73,27 +84,30 @@ export function GalleryPagination({
 
   return (
     <nav
-      className="flex items-center gap-1"
+      className={cn(
+        "flex items-center gap-1 transition-opacity",
+        isPending && "pointer-events-none opacity-60",
+      )}
       role="navigation"
       aria-label="Pagination"
     >
+      {/* Loading indicator */}
+      {isPending && (
+        <div className="mr-2 flex items-center gap-1 text-sm text-gray-500">
+          <Loader2 size={14} className="animate-spin" />
+          <span className="text-xs">加载中</span>
+        </div>
+      )}
+
       {/* First Page */}
       <Button
         variant="outline"
         size="icon"
         className="h-9 w-9"
-        disabled={currentPage === 1}
-        asChild={currentPage !== 1}
+        disabled={currentPage === 1 || isPending}
+        onClick={() => navigateToPage(1)}
       >
-        {currentPage === 1 ? (
-          <span>
-            <ChevronsLeft size={16} />
-          </span>
-        ) : (
-          <Link href={buildUrl(1)}>
-            <ChevronsLeft size={16} />
-          </Link>
-        )}
+        <ChevronsLeft size={16} />
       </Button>
 
       {/* Previous Page */}
@@ -101,18 +115,10 @@ export function GalleryPagination({
         variant="outline"
         size="icon"
         className="h-9 w-9"
-        disabled={currentPage === 1}
-        asChild={currentPage !== 1}
+        disabled={currentPage === 1 || isPending}
+        onClick={() => navigateToPage(currentPage - 1)}
       >
-        {currentPage === 1 ? (
-          <span>
-            <ChevronLeft size={16} />
-          </span>
-        ) : (
-          <Link href={buildUrl(currentPage - 1)}>
-            <ChevronLeft size={16} />
-          </Link>
-        )}
+        <ChevronLeft size={16} />
       </Button>
 
       {/* Page Numbers */}
@@ -131,13 +137,10 @@ export function GalleryPagination({
               variant={currentPage === page ? "default" : "outline"}
               size="icon"
               className="h-9 w-9"
-              asChild={currentPage !== page}
+              disabled={currentPage === page || isPending}
+              onClick={() => navigateToPage(page)}
             >
-              {currentPage === page ? (
-                <span>{page}</span>
-              ) : (
-                <Link href={buildUrl(page)}>{page}</Link>
-              )}
+              {page}
             </Button>
           ),
         )}
@@ -148,18 +151,10 @@ export function GalleryPagination({
         variant="outline"
         size="icon"
         className="h-9 w-9"
-        disabled={currentPage === totalPages}
-        asChild={currentPage !== totalPages}
+        disabled={currentPage === totalPages || isPending}
+        onClick={() => navigateToPage(currentPage + 1)}
       >
-        {currentPage === totalPages ? (
-          <span>
-            <ChevronRight size={16} />
-          </span>
-        ) : (
-          <Link href={buildUrl(currentPage + 1)}>
-            <ChevronRight size={16} />
-          </Link>
-        )}
+        <ChevronRight size={16} />
       </Button>
 
       {/* Last Page */}
@@ -167,18 +162,10 @@ export function GalleryPagination({
         variant="outline"
         size="icon"
         className="h-9 w-9"
-        disabled={currentPage === totalPages}
-        asChild={currentPage !== totalPages}
+        disabled={currentPage === totalPages || isPending}
+        onClick={() => navigateToPage(totalPages)}
       >
-        {currentPage === totalPages ? (
-          <span>
-            <ChevronsRight size={16} />
-          </span>
-        ) : (
-          <Link href={buildUrl(totalPages)}>
-            <ChevronsRight size={16} />
-          </Link>
-        )}
+        <ChevronsRight size={16} />
       </Button>
     </nav>
   );

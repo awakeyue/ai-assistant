@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Select,
@@ -8,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter } from "lucide-react";
+import { Filter, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TemplateFilterProps {
   currentTemplate: string;
@@ -28,6 +30,7 @@ const TEMPLATE_OPTIONS = [
 export function TemplateFilter({ currentTemplate }: TemplateFilterProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
   const handleValueChange = (value: string) => {
     const params = new URLSearchParams();
@@ -36,13 +39,23 @@ export function TemplateFilter({ currentTemplate }: TemplateFilterProps) {
     if (value !== "all") {
       params.set("template", value);
     }
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
   };
 
   return (
-    <Select value={currentTemplate} onValueChange={handleValueChange}>
-      <SelectTrigger className="w-[160px]">
-        <Filter size={14} className="mr-2 opacity-50" />
+    <Select
+      value={currentTemplate}
+      onValueChange={handleValueChange}
+      disabled={isPending}
+    >
+      <SelectTrigger className={cn("w-40", isPending && "opacity-70")}>
+        {isPending ? (
+          <Loader2 size={14} className="mr-2 animate-spin" />
+        ) : (
+          <Filter size={14} className="mr-2 opacity-50" />
+        )}
         <SelectValue placeholder="选择模板" />
       </SelectTrigger>
       <SelectContent>
