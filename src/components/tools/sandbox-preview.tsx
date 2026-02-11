@@ -357,23 +357,18 @@ ActionButtons.displayName = "ActionButtons";
 
 /**
  * Check if Tailwind CSS should be injected via CDN
+ * Always inject by default unless CDN is already present in files
  */
 function shouldInjectTailwind(
   files: Record<string, SandpackFileConfig>,
-  dependencies?: Record<string, string>,
 ): boolean {
-  // Check if tailwindcss is in dependencies
-  const hasTailwindDependency =
-    dependencies &&
-    (Object.keys(dependencies).some((dep) => dep.includes("tailwindcss")) ||
-      dependencies["tailwindcss"]);
-
   // Check if any file already contains the Tailwind CDN
   const hasTailwindCDN = Object.values(files).some((file) =>
     file.code.includes("cdn.tailwindcss.com"),
   );
 
-  return !!hasTailwindDependency && !hasTailwindCDN;
+  // Always inject unless CDN is already present
+  return !hasTailwindCDN;
 }
 
 export interface SandpackRendererProps {
@@ -448,12 +443,13 @@ export const SandpackRenderer = memo(
     }, [dependencies]);
 
     // Determine if we need to inject Tailwind via external resources
+    // Always inject by default to ensure styles work even if AI forgets to add tailwindcss to dependencies
     const externalResources = useMemo(() => {
-      if (shouldInjectTailwind(files, dependencies)) {
+      if (shouldInjectTailwind(files)) {
         return ["https://cdn.tailwindcss.com"];
       }
       return undefined;
-    }, [files, dependencies]);
+    }, [files]);
 
     return (
       <div
