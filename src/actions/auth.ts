@@ -115,6 +115,28 @@ export async function signInWithEmail(formData: FormData) {
 }
 
 /**
+ * Resend verification email for a recently registered user
+ */
+export async function resendVerificationEmail(email: string) {
+  if (!email) {
+    return { error: "邮箱不能为空" };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
+
+/**
  * 登出
  */
 export async function signOut() {

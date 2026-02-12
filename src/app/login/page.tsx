@@ -15,7 +15,11 @@ import {
 import { Mail, Loader2, CheckCircle2, MailOpen, RefreshCw } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { IoLogoGithub } from "react-icons/io";
-import { signUpWithEmail, signInWithEmail } from "@/actions/auth";
+import {
+  signUpWithEmail,
+  signInWithEmail,
+  resendVerificationEmail,
+} from "@/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
@@ -92,14 +96,10 @@ function LoginPageContent() {
 
     setResendLoading(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: registeredEmail,
-      });
+      const result = await resendVerificationEmail(registeredEmail);
 
-      if (error) {
-        toast.error(error.message);
+      if (result?.error) {
+        toast.error(result.error);
       } else {
         toast.success("验证邮件已重新发送");
         // Start countdown, 60 seconds before allowing resend

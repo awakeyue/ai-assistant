@@ -3,32 +3,34 @@
 import { Button } from "@/components/ui/button";
 import { ChatStatus, FileUIPart } from "ai";
 import { ArrowUp, X, Loader2 } from "lucide-react";
-import {
-  useRef,
-  useState,
-  useCallback,
-  memo,
-  useEffect,
-  useSyncExternalStore,
-} from "react";
+import { useRef, useState, useCallback, memo, useEffect } from "react";
 import Image from "next/image";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useModelStore } from "@/store/chat";
-import { useRouter } from "next/navigation";
 import { cn, uploadFiles } from "@/lib/utils";
 import { toast } from "sonner";
-import { UserModelConfig } from "@/types/chat";
 import InputAttachments, { AttachmentType } from "./input-attachments";
+import dynamic from "next/dynamic";
+import { ModelLogo } from "./model-logo";
+
+const ModelSelector = dynamic(() => import("./model-selector"), {
+  ssr: false,
+  loading: () => (
+    <Button
+      title="选择模型"
+      size="sm"
+      variant="ghost"
+      className="max-w-40 gap-1.5 outline-none"
+    >
+      <ModelLogo model={undefined} size="sm" />
+      <span className="truncate text-xs">加载中...</span>
+    </Button>
+  ),
+});
 
 // Represents a file being uploaded or already uploaded
 interface UploadingFile {
@@ -67,16 +69,7 @@ export default function InputBox({
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Use useSyncExternalStore to safely detect client-side mounting (avoids hydration mismatch)
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-
-  const { currentModelId, modelList, setCurrentModelId, isLoading } =
-    useModelStore();
-  const router = useRouter();
+  const { currentModelId, modelList } = useModelStore();
   const currentModel =
     modelList.find((model) => model.id === currentModelId) || modelList[0];
 
@@ -298,58 +291,7 @@ export default function InputBox({
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  title="选择模型"
-                  size="sm"
-                  variant="ghost"
-                  className="max-w-40 gap-1.5 outline-none"
-                >
-                  {mounted &&
-                    !isLoading &&
-                    modelList.length > 0 &&
-                    currentModel && (
-                      <ModelLogo model={currentModel} size="sm" />
-                    )}
-                  <span className="truncate text-xs">
-                    {!mounted || isLoading
-                      ? "加载中..."
-                      : modelList.length === 0
-                        ? "请配置模型"
-                        : currentModel?.name || "选择模型"}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-60">
-                {modelList.length === 0 ? (
-                  <DropdownMenuItem
-                    onSelect={() => router.push("/settings/models")}
-                    className="text-muted-foreground"
-                  >
-                    暂无模型，点击配置
-                  </DropdownMenuItem>
-                ) : (
-                  <>
-                    {modelList.map((model) => (
-                      <DropdownMenuItem
-                        key={model.id}
-                        onSelect={() => setCurrentModelId(model.id)}
-                        className={cn(
-                          "hover:bg-accent/20 flex cursor-pointer items-center gap-2 p-2",
-                          model.id === currentModelId
-                            ? "bg-accent text-accent-foreground"
-                            : "",
-                        )}
-                      >
-                        <ModelLogo model={model} size="md" />
-                        <span className="text-xs">{model.name}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ModelSelector />
             <InputAttachments
               currentModel={currentModel}
               onFilesSelect={handleFilesSelect}
@@ -469,41 +411,3 @@ const FilesPreview = memo(function FilesPreview({
   );
 });
 FilesPreview.displayName = "FilesPreview";
-
-const ModelLogo = memo(function ModelLogo({
-  model,
-  size = "sm",
-}: {
-  model: UserModelConfig | undefined;
-  size?: "sm" | "md";
-}) {
-  const sizeClass = size === "sm" ? "size-4" : "size-5";
-
-  if (!model?.logoUrl) {
-    return (
-      <div
-        className={cn(
-          "bg-muted flex items-center justify-center rounded border",
-          sizeClass,
-        )}
-      >
-        <span className="text-muted-foreground font-medium">
-          {model?.name?.charAt(0)?.toUpperCase() || "M"}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("relative shrink-0 overflow-hidden rounded", sizeClass)}>
-      <Image
-        src={model.logoUrl}
-        alt={model.name}
-        width={size === "sm" ? 16 : 20}
-        height={size === "sm" ? 16 : 20}
-        className="size-full object-cover"
-      />
-    </div>
-  );
-});
-ModelLogo.displayName = "ModelLogo";
