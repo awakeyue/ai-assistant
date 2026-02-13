@@ -32,6 +32,10 @@ const ModelSelector = dynamic(() => import("./model-selector"), {
   ),
 });
 
+const ToolSelector = dynamic(() => import("./tool-selector"), {
+  ssr: false,
+});
+
 // Represents a file being uploaded or already uploaded
 interface UploadingFile {
   id: string; // Unique identifier for React key and tracking
@@ -292,6 +296,7 @@ export default function InputBox({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
             <ModelSelector />
+            <ToolSelector disabled={externalDisabled} />
             <InputAttachments
               currentModel={currentModel}
               onFilesSelect={handleFilesSelect}

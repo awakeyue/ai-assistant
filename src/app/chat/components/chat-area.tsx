@@ -19,6 +19,7 @@ import { useSWRConfig } from "swr";
 import type { UIMessage, FileUIPart, ToolUIPart } from "ai";
 import { nanoid } from "nanoid";
 import { useToolStateStore } from "@/store/tool-state-store";
+import { useToolSelectStore } from "@/store/tool-select-store";
 import { useUIStore } from "@/store/ui-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StreamingDots } from "@/components/custom/streaming-dots";
@@ -308,6 +309,7 @@ export default function ChatArea({
 
     // Get current capabilities state
     const capabilities = useChatCapabilitiesStore.getState().getCapabilities();
+    const enabledTools = useToolSelectStore.getState().enabledTools;
 
     sendMessage(
       {
@@ -318,6 +320,7 @@ export default function ChatArea({
         body: {
           modelId: currentModelId,
           capabilities,
+          enabledTools,
         },
       },
     );

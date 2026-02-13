@@ -5,16 +5,18 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { decryptApiKey } from "@/lib/crypto";
 import { ChatCapabilities, ModelExtraOptions } from "@/types/chat";
-import { tools } from "@/ai/tools";
+import { tools, getFilteredTools, type ToolKey } from "@/ai/tools";
 
 export async function POST(req: Request) {
   const {
     messages,
     modelId,
+    enabledTools,
   }: {
     messages: UIMessage[];
     modelId: string;
     capabilities?: ChatCapabilities;
+    enabledTools?: ToolKey[];
   } = await req.json();
 
   // Get current user
@@ -58,11 +60,14 @@ export async function POST(req: Request) {
   // Parse extra options from model config - passthrough all fields directly
   const extraOptions = (modelConfig.extraOptions as ModelExtraOptions) || {};
 
+  // Filter tools based on user selection (default to all tools if not specified)
+  const activeTools = enabledTools ? getFilteredTools(enabledTools) : tools;
+
   const result = streamText({
     model: model(modelConfig.modelId),
     system: modelConfig.systemPrompt || undefined,
     messages: await convertToModelMessages(messages),
-    tools: tools,
+    tools: activeTools,
     stopWhen: stepCountIs(5),
     // Passthrough all extra options directly to streamText
     providerOptions: {

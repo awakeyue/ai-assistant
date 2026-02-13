@@ -173,3 +173,50 @@ export const tools = {
   currentTime: currentTimeTool,
   codeSandbox: codeSandboxTool,
 };
+
+// Tool key type - all available tool keys
+export type ToolKey = keyof typeof tools;
+
+// Tool metadata for UI display
+export interface ToolMeta {
+  key: ToolKey;
+  title: string;
+  description: string;
+  icon: string; // Lucide icon name identifier
+}
+
+// Registry of all available tools with their metadata
+export const TOOL_REGISTRY: ToolMeta[] = [
+  {
+    key: "codeSandbox",
+    title: "代码沙盒预览",
+    description: "实时预览和运行代码",
+    icon: "Code",
+  },
+  {
+    key: "gomokuGame",
+    title: "AI 五子棋",
+    description: "开始一局五子棋游戏",
+    icon: "Grid3X3",
+  },
+  {
+    key: "currentTime",
+    title: "获取当前时间",
+    description: "获取当前的日期和时间信息",
+    icon: "Clock",
+  },
+];
+
+// All tool keys for convenience
+export const ALL_TOOL_KEYS: ToolKey[] = TOOL_REGISTRY.map((t) => t.key);
+
+// Get filtered tools based on enabled keys
+export function getFilteredTools(enabledKeys: ToolKey[]) {
+  const filtered = {} as Record<string, (typeof tools)[ToolKey]>;
+  for (const key of enabledKeys) {
+    if (tools[key]) {
+      filtered[key] = tools[key];
+    }
+  }
+  return filtered;
+}
