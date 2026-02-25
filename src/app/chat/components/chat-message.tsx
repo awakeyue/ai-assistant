@@ -439,40 +439,7 @@ const TextBlock = ({
 };
 TextBlock.displayName = "TextBlock";
 
-// CSS styles for streaming cursor animation
-// Injected once at module level for performance
-if (typeof document !== "undefined") {
-  const styleId = "streaming-cursor-styles";
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement("style");
-    style.id = styleId;
-    style.textContent = `
-      @keyframes streamingBlink {
-        0%, 50% { opacity: 1; }
-        51%, 100% { opacity: 0; }
-      }
-      .streaming-cursor {
-        display: inline-block;
-        width: 2px;
-        height: 1em;
-        background: linear-gradient(180deg, #3b82f6, #8b5cf6);
-        margin-left: 2px;
-        vertical-align: text-bottom;
-        border-radius: 1px;
-        animation: streamingBlink 1s steps(1) infinite;
-      }
-      
-      @keyframes blockFadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .block-fade-in {
-        animation: blockFadeIn 0.4s ease-out forwards;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-}
+// Animation styles are now in globals.css for better performance and caching
 
 // Stable remarkPlugins array reference - defined at module level
 const remarkPlugins = [remarkGfm];
@@ -498,7 +465,7 @@ const markdownComponents: Components = {
     }
 
     return (
-      <div className="block-fade-in">
+      <div>
         <CodeBlock language={match ? match[1] : "text"} value={codeString} />
       </div>
     );
@@ -506,7 +473,7 @@ const markdownComponents: Components = {
 
   // 表格处理
   table: ({ children }) => (
-    <div className="scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent dark:scrollbar-thumb-gray-500 block-fade-in my-4 w-full overflow-x-auto overflow-y-hidden rounded-lg border border-gray-200 dark:border-gray-600">
+    <div className="scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent dark:scrollbar-thumb-gray-500 my-4 w-full overflow-x-auto overflow-y-hidden rounded-lg border border-gray-200 dark:border-gray-600">
       <table className="w-full min-w-full table-auto border-collapse text-left text-sm">
         {children}
       </table>
@@ -543,33 +510,31 @@ const markdownComponents: Components = {
     </td>
   ),
   // 基础排版
-  p: ({ children }) => (
-    <p className="block-fade-in mb-4 leading-7 last:mb-0">{children}</p>
-  ),
+  p: ({ children }) => <p className="mb-4 leading-7 last:mb-0">{children}</p>,
   ul: ({ children }) => (
     <ul className="mb-4 list-disc space-y-2 pl-6">{children}</ul>
   ),
   ol: ({ children }) => (
     <ol className="mb-4 list-decimal space-y-2 pl-6">{children}</ol>
   ),
-  li: ({ children }) => <li className="block-fade-in pl-1">{children}</li>,
+  li: ({ children }) => <li className="pl-1">{children}</li>,
   h1: ({ children }) => (
-    <h1 className="block-fade-in mt-6 mb-4 border-b pb-2 text-2xl font-bold tracking-tight text-gray-900">
+    <h1 className="mt-6 mb-4 border-b pb-2 text-2xl font-bold tracking-tight text-gray-900">
       {children}
     </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="block-fade-in mt-5 mb-3 text-xl font-semibold tracking-tight text-gray-800">
+    <h2 className="mt-5 mb-3 text-xl font-semibold tracking-tight text-gray-800">
       {children}
     </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="block-fade-in mt-4 mb-2 text-lg font-semibold text-gray-800">
+    <h3 className="mt-4 mb-2 text-lg font-semibold text-gray-800">
       {children}
     </h3>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="block-fade-in my-4 border-l-4 border-gray-300 bg-gray-50 py-2 pl-4 text-gray-600 italic">
+    <blockquote className="my-4 border-l-4 border-gray-300 bg-gray-50 py-2 pl-4 text-gray-600 italic">
       {children}
     </blockquote>
   ),
@@ -589,10 +554,10 @@ const markdownComponents: Components = {
 // Separate component for Markdown rendering
 // Memoized to prevent unnecessary re-parses when text hasn't changed
 const MarkdownRenderer = memo(
-  ({ text }: { text: string; isStreaming?: boolean }) => {
+  ({ text, isStreaming }: { text: string; isStreaming?: boolean }) => {
     return (
       <div
-        className="markdown-body leading-6"
+        className={cn("markdown-body leading-6", isStreaming && "streaming")}
         style={{
           contain: "content",
           contentVisibility: "auto",
