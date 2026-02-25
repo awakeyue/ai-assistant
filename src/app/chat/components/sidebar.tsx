@@ -55,6 +55,7 @@ interface SidebarContentProps {
   user: UserInfo | null;
   handleSignOut: () => void;
   isLoadingChatList: boolean;
+  onViewAllHistory: () => void;
 }
 
 const SidebarContent = ({
@@ -72,164 +73,182 @@ const SidebarContent = ({
   user,
   handleSignOut,
   isLoadingChatList,
-}: SidebarContentProps) => (
-  <div
-    className={cn(
-      "bg-sidebar flex h-full flex-col",
-      !inSheet && "border-sidebar-border border-r transition-all duration-300",
-      !inSheet && (isSidebarCollapsed ? "w-16" : "w-64"),
-      inSheet && "w-full",
-    )}
-  >
-    {/* Header */}
-    <div className="border-sidebar-border space-y-3 border-b p-4">
-      <div className="flex items-center justify-between">
-        {(!isSidebarCollapsed || inSheet) && (
-          <div className="flex items-center gap-2">
-            <div className="bg-sidebar-primary text-sidebar-primary-foreground flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold">
-              AI
+  onViewAllHistory,
+}: SidebarContentProps) => {
+  const MAX_DISPLAY = 20;
+  const displayChats = chatHistorys?.slice(0, MAX_DISPLAY) ?? [];
+  const hasMore = (chatHistorys?.length ?? 0) >= MAX_DISPLAY;
+
+  return (
+    <div
+      className={cn(
+        "bg-sidebar flex h-full flex-col",
+        !inSheet &&
+          "border-sidebar-border border-r transition-all duration-300",
+        !inSheet && (isSidebarCollapsed ? "w-16" : "w-64"),
+        inSheet && "w-full",
+      )}
+    >
+      {/* Header */}
+      <div className="border-sidebar-border space-y-3 border-b p-4">
+        <div className="flex items-center justify-between">
+          {(!isSidebarCollapsed || inSheet) && (
+            <div className="flex items-center gap-2">
+              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold">
+                AI
+              </div>
+              <span className="text-sidebar-foreground flex-1 font-semibold">
+                Chat
+              </span>
             </div>
-            <span className="text-sidebar-foreground flex-1 font-semibold">
-              Chat
-            </span>
-          </div>
-        )}
-        {/* Hide collapse button in sheet mode */}
-        {!inSheet && (
-          <Button
-            onClick={toggleSidebar}
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "shrink-0",
-              isSidebarCollapsed ? "w-full justify-center" : "",
-            )}
-            title={isSidebarCollapsed ? "Expand" : "Collapse"}
-          >
-            <PanelLeft size={18} />
-          </Button>
+          )}
+          {/* Hide collapse button in sheet mode */}
+          {!inSheet && (
+            <Button
+              onClick={toggleSidebar}
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "shrink-0",
+                isSidebarCollapsed ? "w-full justify-center" : "",
+              )}
+              title={isSidebarCollapsed ? "Expand" : "Collapse"}
+            >
+              <PanelLeft size={18} />
+            </Button>
+          )}
+        </div>
+
+        {/* New Chat button */}
+        <Button
+          onClick={handleCreateChat}
+          variant="outline"
+          size="sm"
+          disabled={isLoading && navigatingToChatId === null}
+          className={cn(
+            "w-full gap-2",
+            !inSheet && isSidebarCollapsed
+              ? "justify-center px-0"
+              : "justify-start",
+          )}
+          title={!inSheet && isSidebarCollapsed ? "新建聊天" : ""}
+        >
+          {isLoading && navigatingToChatId === null ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            <Plus size={18} />
+          )}
+          {(inSheet || !isSidebarCollapsed) && "新建聊天"}
+        </Button>
+      </div>
+
+      {/* Chat History */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {(inSheet || !isSidebarCollapsed) && (
+          <>
+            <div className="px-4 py-3">
+              <p className="text-sidebar-foreground/70 text-xs font-semibold uppercase">
+                更早
+              </p>
+            </div>
+            <ScrollArea className="flex-1 overflow-auto">
+              {isLoadingChatList ? (
+                <ChatHistorySkeleton />
+              ) : (
+                <div className="space-y-1 px-2">
+                  {displayChats.map((chatData) => {
+                    const isLoadingThisChat =
+                      navigatingToChatId === chatData.id;
+                    const isActive = currentChatId === chatData.id;
+
+                    return (
+                      <div
+                        key={chatData.id}
+                        className={cn(
+                          "group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 transition-all",
+                          isActive
+                            ? "bg-sidebar-primary/20 text-sidebar-foreground"
+                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent",
+                          isLoadingThisChat && "opacity-70",
+                        )}
+                        title={chatData.title}
+                        onClick={() =>
+                          handleSelectChat(chatData.id, chatData.modelId)
+                        }
+                      >
+                        {/* Loading indicator for navigating chat */}
+                        {isLoadingThisChat && (
+                          <Loader2
+                            size={14}
+                            className="shrink-0 animate-spin"
+                          />
+                        )}
+                        <div className="w-0 flex-1 truncate text-left text-sm">
+                          {chatData.title || "新对话"}
+                        </div>
+                        {!isLoadingThisChat && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className={cn(
+                                  inSheet
+                                    ? "opacity-50 transition-opacity group-hover:opacity-100"
+                                    : "opacity-0 transition-opacity group-hover:opacity-100",
+                                )}
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRenameChat(chatData.id, chatData.title);
+                                }}
+                                className="flex cursor-pointer items-center gap-2"
+                              >
+                                <Pencil size={16} />
+                                重命名
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteChatHistory(chatData.id);
+                                }}
+                                className="flex cursor-pointer items-center gap-2 text-red-600"
+                              >
+                                <Trash2 size={16} />
+                                删除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <button
+                    onClick={onViewAllHistory}
+                    className="text-muted-foreground hover:text-foreground hover:bg-sidebar-accent flex w-full items-center gap-1.5 rounded-lg px-2 py-2.5 text-xs transition-colors"
+                  >
+                    {hasMore ? "查看全部" : "管理会话"}
+                  </button>
+                </div>
+              )}
+            </ScrollArea>
+          </>
         )}
       </div>
 
-      {/* New Chat button */}
-      <Button
-        onClick={handleCreateChat}
-        variant="outline"
-        size="sm"
-        disabled={isLoading && navigatingToChatId === null}
-        className={cn(
-          "w-full gap-2",
-          !inSheet && isSidebarCollapsed
-            ? "justify-center px-0"
-            : "justify-start",
-        )}
-        title={!inSheet && isSidebarCollapsed ? "新建聊天" : ""}
-      >
-        {isLoading && navigatingToChatId === null ? (
-          <Loader2 size={18} className="animate-spin" />
-        ) : (
-          <Plus size={18} />
-        )}
-        {(inSheet || !isSidebarCollapsed) && "新建聊天"}
-      </Button>
+      {/* Footer - User Menu */}
+      <SidebarUserMenu
+        user={user}
+        isSidebarCollapsed={isSidebarCollapsed}
+        inSheet={inSheet}
+        onSignOut={handleSignOut}
+      />
     </div>
-
-    {/* Chat History */}
-    <div className="flex flex-1 flex-col overflow-hidden">
-      {(inSheet || !isSidebarCollapsed) && (
-        <>
-          <div className="px-4 py-3">
-            <p className="text-sidebar-foreground/70 text-xs font-semibold uppercase">
-              更早
-            </p>
-          </div>
-          <ScrollArea className="flex-1 overflow-auto">
-            {isLoadingChatList ? (
-              <ChatHistorySkeleton />
-            ) : (
-              <div className="space-y-1 px-2">
-                {chatHistorys?.map((chatData) => {
-                  const isLoadingThisChat = navigatingToChatId === chatData.id;
-                  const isActive = currentChatId === chatData.id;
-
-                  return (
-                    <div
-                      key={chatData.id}
-                      className={cn(
-                        "group flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 transition-all",
-                        isActive
-                          ? "bg-sidebar-primary/20 text-sidebar-foreground"
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent",
-                        isLoadingThisChat && "opacity-70",
-                      )}
-                      title={chatData.title}
-                      onClick={() =>
-                        handleSelectChat(chatData.id, chatData.modelId)
-                      }
-                    >
-                      {/* Loading indicator for navigating chat */}
-                      {isLoadingThisChat && (
-                        <Loader2 size={14} className="shrink-0 animate-spin" />
-                      )}
-                      <div className="w-0 flex-1 truncate text-left text-sm">
-                        {chatData.title || "新对话"}
-                      </div>
-                      {!isLoadingThisChat && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              className={cn(
-                                inSheet
-                                  ? "opacity-50 transition-opacity group-hover:opacity-100"
-                                  : "opacity-0 transition-opacity group-hover:opacity-100",
-                              )}
-                            >
-                              <MoreVertical size={16} />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRenameChat(chatData.id, chatData.title);
-                              }}
-                              className="flex cursor-pointer items-center gap-2"
-                            >
-                              <Pencil size={16} />
-                              重命名
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteChatHistory(chatData.id);
-                              }}
-                              className="flex cursor-pointer items-center gap-2 text-red-600"
-                            >
-                              <Trash2 size={16} />
-                              删除
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </ScrollArea>
-        </>
-      )}
-    </div>
-
-    {/* Footer - User Menu */}
-    <SidebarUserMenu
-      user={user}
-      isSidebarCollapsed={isSidebarCollapsed}
-      inSheet={inSheet}
-      onSignOut={handleSignOut}
-    />
-  </div>
-);
+  );
+};
 
 export default function Sidebar() {
   const {
@@ -353,6 +372,13 @@ export default function Sidebar() {
     await signOut();
   };
 
+  const handleViewAllHistory = () => {
+    if (isMobile) {
+      setMobileSidebarOpen(false);
+    }
+    router.push("/chat/history");
+  };
+
   // Check if currently loading (either transitioning or navigating)
   const isLoading = isPending || isNavigating;
 
@@ -437,6 +463,7 @@ export default function Sidebar() {
               user={user}
               handleSignOut={handleSignOut}
               isLoadingChatList={isLoadingChatList}
+              onViewAllHistory={handleViewAllHistory}
             />
           </SheetContent>
         </Sheet>
@@ -462,6 +489,7 @@ export default function Sidebar() {
         user={user}
         handleSignOut={handleSignOut}
         isLoadingChatList={isLoadingChatList}
+        onViewAllHistory={handleViewAllHistory}
       />
       {RenameDialog}
     </>

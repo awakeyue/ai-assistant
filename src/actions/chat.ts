@@ -67,6 +67,90 @@ export async function getUserChatList() {
 }
 
 /**
+ * Search user chats with keyword and pagination
+ * Returns first assistant message as preview
+ */
+export async function searchUserChats(params: {
+  keyword?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { chats: [], total: 0, hasMore: false };
+  }
+
+  const { keyword = "", page = 1, pageSize = 20 } = params;
+  const skip = (page - 1) * pageSize;
+
+  const where: any = { userId: user.id };
+
+  if (keyword.trim()) {
+    where.title = {
+      contains: keyword.trim(),
+      mode: "insensitive",
+    };
+  }
+
+  const [chats, total] = await Promise.all([
+    prisma.chat.findMany({
+      where,
+      orderBy: { updatedAt: "desc" },
+      skip,
+      take: pageSize,
+      select: {
+        id: true,
+        title: true,
+        modelId: true,
+        createdAt: true,
+        updatedAt: true,
+        messages: {
+          where: { role: "assistant" },
+          orderBy: { createdAt: "asc" },
+          take: 1,
+          select: { content: true },
+        },
+      },
+    }),
+    prisma.chat.count({ where }),
+  ]);
+
+  const chatsWithPreview = chats.map((chat) => ({
+    id: chat.id,
+    title: chat.title,
+    modelId: chat.modelId,
+    createdAt: chat.createdAt,
+    updatedAt: chat.updatedAt,
+    preview: chat.messages[0]?.content?.slice(0, 200) || "",
+  }));
+
+  return {
+    chats: chatsWithPreview,
+    total,
+    hasMore: skip + pageSize < total,
+  };
+}
+
+/**
+ * Batch delete chats
+ */
+export async function batchDeleteChats(chatIds: string[]): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return false;
+  }
+
+  await prisma.chat.deleteMany({
+    where: {
+      id: { in: chatIds },
+      userId: user.id,
+    },
+  });
+
+  return true;
+}
+
+/**
  * 获取单个聊天
  */
 export async function getChatById(
