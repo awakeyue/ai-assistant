@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "./auth";
+import { getCurrentUser } from "@/lib/auth";
 import type { UIMessage } from "ai";
 import { nanoid } from "nanoid";
 

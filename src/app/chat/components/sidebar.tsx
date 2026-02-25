@@ -319,13 +319,8 @@ export default function Sidebar() {
     ? pathname.slice(6)
     : null;
 
-  const { setCurrentModelId, modelList, fetchModels } = useModelStore();
+  const { setCurrentModelId, modelList } = useModelStore();
   const { triggerReset } = useChatStatusStore();
-
-  // Load models when component mounts (user logs in)
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
 
   // Use SWR to fetch chat list
   const {
