@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     system: modelConfig.systemPrompt || undefined,
     messages: await convertToModelMessages(messages),
     tools: activeTools,
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(3),
     maxOutputTokens: "codeSandbox" in activeTools ? 32768 : undefined,
     // Passthrough all extra options directly to streamText
     providerOptions: {

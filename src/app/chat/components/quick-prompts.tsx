@@ -9,13 +9,17 @@ import {
   Brush,
   Code2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { type ToolKey, TOOL_REGISTRY } from "@/ai/tools";
+import { useToolSelectStore } from "@/store/tool-select-store";
 
 interface QuickPrompt {
   icon: React.ReactNode;
   title: string;
   prompt: string;
   isToolTrigger?: boolean; // Mark if this prompt triggers a tool
+  requiredTools?: ToolKey[]; // Tools required by this prompt
 }
 
 const quickPrompts: QuickPrompt[] = [
@@ -25,24 +29,28 @@ const quickPrompts: QuickPrompt[] = [
     prompt:
       "使用 React + Tailwind CSS + TypeScript，帮我实现一个现代风格的按钮组件，并使用沙盒预览",
     isToolTrigger: true,
+    requiredTools: ["codeSandbox"],
   },
   {
     icon: <Gamepad2 className="h-4 w-4" />,
     title: "来局五子棋",
     prompt: "和我一起下局五子棋",
     isToolTrigger: true,
+    requiredTools: ["gomokuGame"],
   },
   {
     icon: <Brush className="h-4 w-4" />,
     title: "动态 SVG 图案",
     prompt: "用 SVG 画一个带有动画效果的渐变圆环加载指示器，并使用沙盒预览",
     isToolTrigger: true,
+    requiredTools: ["codeSandbox"],
   },
   {
     icon: <Timer className="h-4 w-4" />,
     title: "查询当前时间",
     prompt: "现在是什么时间？请告诉我当前的日期和时间",
     isToolTrigger: true,
+    requiredTools: ["currentTime"],
   },
   {
     icon: <Lightbulb className="h-4 w-4" />,
@@ -63,6 +71,26 @@ interface QuickPromptsProps {
 }
 
 export function QuickPrompts({ onSelect, className }: QuickPromptsProps) {
+  const { enabledTools, setEnabledTools } = useToolSelectStore();
+
+  const handleSelect = (item: QuickPrompt) => {
+    if (item.requiredTools?.length) {
+      const missingTools = item.requiredTools.filter(
+        (key) => !enabledTools.includes(key),
+      );
+      if (missingTools.length > 0) {
+        // Auto-enable missing tools
+        setEnabledTools([...enabledTools, ...missingTools]);
+        // Show toast with tool names
+        const toolNames = missingTools
+          .map((key) => TOOL_REGISTRY.find((t) => t.key === key)?.title ?? key)
+          .join("、");
+        toast.info(`已自动开启「${toolNames}」工具`);
+      }
+    }
+    onSelect(item.prompt);
+  };
+
   return (
     <div className={cn("flex w-full flex-col", className)}>
       <div className="text-muted-foreground mb-3 flex shrink-0 items-center justify-center gap-2 text-sm">
@@ -70,13 +98,13 @@ export function QuickPrompts({ onSelect, className }: QuickPromptsProps) {
         <span>试试这些</span>
       </div>
       <div>
-        <div className="grid grid-cols-1 gap-2 px-4 sm:flex sm:flex-wrap sm:justify-center sm:gap-3 sm:px-0">
+        <div className="flex flex-wrap justify-center gap-2 px-3 sm:gap-3 sm:px-0">
           {quickPrompts.map((item, index) => (
             <button
               key={index}
-              onClick={() => onSelect(item.prompt)}
+              onClick={() => handleSelect(item)}
               className={cn(
-                "group flex items-center gap-2 rounded-xl border px-3 py-2.5",
+                "group flex w-auto items-center gap-2 rounded-xl border px-3 py-2.5",
                 "text-left text-sm",
                 "transition-all duration-200 ease-out",
                 "active:scale-[0.98]",

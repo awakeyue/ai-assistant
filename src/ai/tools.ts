@@ -15,7 +15,7 @@ export const weatherTool = createTool({
 export const gomokuTool = createTool({
   title: "AI五子棋",
   description:
-    "开始一局五子棋游戏。当用户想要玩五子棋或类似的棋盘游戏时使用此工具，玩家轮流放置棋子以形成五子连珠。",
+    "开始一局五子棋游戏。当用户想要玩五子棋或类似的棋盘游戏时使用此工具，玩家轮流放置棋子以形成五子连珠。注意：每次对话中只能调用一次此工具，不要重复调用。",
   inputSchema: z.object({
     playerColor: z
       .enum(["black", "white"])
@@ -78,6 +78,9 @@ export const currentTimeTool = createTool({
 export const codeSandboxTool = createTool({
   title: "代码沙盒预览",
   description: `交互式代码沙盒工具，用于实时预览和运行代码。
+
+## 重要约束
+- 每次对话中只能调用一次此工具，不要重复调用
 
 ## 何时使用
 - 用户要求创建可交互的 demo、示例、原型
