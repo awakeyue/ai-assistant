@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { User as UserInfo } from "@/types/user";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 
 interface SidebarUserMenuProps {
   user: UserInfo | null;
@@ -49,6 +50,7 @@ export default function SidebarUserMenu({
   onSignOut,
 }: SidebarUserMenuProps) {
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
 
   return (
     <div className="border-sidebar-border border-t p-2">
@@ -108,14 +110,14 @@ export default function SidebarUserMenu({
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => (window.location.href = "/settings/models")}
+            onClick={() => router.push("/settings/models")}
             className="flex cursor-pointer items-center gap-2"
           >
             <Settings2 size={16} />
             模型管理
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => (window.location.href = "/gallery")}
+            onClick={() => router.push("/gallery")}
             className="flex cursor-pointer items-center gap-2"
           >
             <LayoutGrid size={16} />

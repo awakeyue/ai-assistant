@@ -65,15 +65,11 @@ export const currentTimeTool = createTool({
     const seconds = timeParts.find((p) => p.type === "second")?.value ?? "00";
 
     return {
-      // Formatted date string for display
       formattedDate,
-      // Time components for display
       hours,
       minutes,
       seconds,
-      // ISO string for reference (still in UTC for standardization)
       timestamp: now.toISOString(),
-      // Timezone info
       timeZone,
     };
   },
@@ -83,32 +79,29 @@ export const codeSandboxTool = createTool({
   title: "代码沙盒预览",
   description: `交互式代码沙盒工具，用于实时预览和运行代码。
 
-【何时使用此工具】
-- 用户明确要求"预览"、"实时预览"、"运行"、"沙盒"效果
+## 何时使用
 - 用户要求创建可交互的 demo、示例、原型
-- 用户要求画图、生成图形、创建图标、绘制 SVG 矢量图（使用 static 模板）
+- 用户要求画图、生成图形、绘制 SVG（使用 static 模板）
 
-【何时不使用此工具】
-- 用户只是要求"写代码"、"生成代码"但没提预览 → 直接用 markdown 代码块返回
-- 用户要求解释代码或代码审查 → 不使用此工具
+## 何时不使用
+- 用户只要求写代码但没提预览 → 用 markdown 代码块
+- 用户要求解释或审查代码 → 不使用
 
-【支持的模板类型】
-1. "static" - 纯 HTML/CSS/JS（推荐用于简单页面、SVG 图形预览、不需要框架的场景）
-2. "react" / "react-ts" - React 项目（默认）
-3. "vue" / "vue-ts" - Vue 3 项目
-4. "vanilla" / "vanilla-ts" - 纯 JavaScript/TypeScript
+## 模板与入口文件（只需提供入口文件，其他配置自动处理）
+- "static": 入口 /index.html
+- "react": 入口 /App.js
+- "react-ts": 入口 /App.tsx
+- "vue" / "vue-ts": 入口 /src/App.vue
+- "vanilla": 入口 /index.js
+- "vanilla-ts": 入口 /index.ts
 
-【SVG 图形预览】
-当用户要求画图、生成 SVG 时，使用 template: "static"，将 SVG 代码嵌入 HTML 中：
-{ "/index.html": { code: "<!DOCTYPE html><html><body style='display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0'><svg>...</svg></body></html>", active: true } }
-
-【重要规则】
-1. 对于简单 HTML 页面和 SVG 预览，必须使用 template: "static"，入口文件为 /index.html
-2. React 项目入口文件是 /App.js 或 /App.tsx
-3. Vue 项目入口文件是 /src/App.vue
-4. Vanilla 项目入口文件是 /index.js 或 /index.ts
-5. 使用外部依赖时必须在 dependencies 中声明
-6. 文件路径必须以 "/" 开头`,
+## 文件规则
+- 所有路径以 "/" 开头
+- 只提供业务文件（组件、样式），不要提供 index.html（static 除外）、package.json、vite.config、tsconfig 等配置文件
+- 优先使用 Tailwind CSS（已自动注入 CDN）
+- 每个文件不超过 300 行，复杂页面拆分为多个组件文件
+- 外部依赖通过 dependencies 参数声明
+`,
   inputSchema: z.object({
     files: z
       .record(
@@ -138,14 +131,7 @@ export const codeSandboxTool = createTool({
         "vue-ts",
       ])
       .describe(
-        `代码模板类型:
-- "static": 纯 HTML/CSS/JS 页面（入口: /index.html）
-- "react": React + JavaScript（入口: /App.js）
-- "react-ts": React + TypeScript（入口: /App.tsx）
-- "vue": Vue 3 + JavaScript（入口: /src/App.vue）
-- "vue-ts": Vue 3 + TypeScript（入口: /src/App.vue）
-- "vanilla": 纯 JavaScript（入口: /index.js）
-- "vanilla-ts": 纯 TypeScript（入口: /index.ts）`,
+        `模板类型。static: 纯HTML; react/react-ts: React项目; vue/vue-ts: Vue3项目; vanilla/vanilla-ts: 纯JS/TS`,
       ),
     title: z
       .string()

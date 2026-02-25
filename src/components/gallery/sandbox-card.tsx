@@ -106,18 +106,18 @@ export function SandboxCard({ item, showCreator = false }: SandboxCardProps) {
 
   return (
     <Link href={`/share/sandbox/${item.chatId}/${item.messageId}`}>
-      <Card className="group h-full cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:bg-gray-800/50 dark:hover:bg-gray-800/80">
-        {/* Live Preview Area */}
-        <CardHeader className="p-3 pb-2">
-          <div className="relative aspect-video overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+      <Card className="group h-full cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:bg-gray-800/50 dark:hover:bg-gray-800/80">
+        {/* Live Preview Area - CodePen style large thumbnail */}
+        <CardHeader className="p-0">
+          <div className="relative aspect-16/10 overflow-hidden border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
             <SandboxCardPreview
               files={item.files}
               template={item.template}
               dependencies={item.dependencies}
             />
-            {/* Hover overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/10">
-              <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 dark:bg-gray-800/90 dark:text-gray-300">
+            {/* Hover overlay with gradient */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/15">
+              <span className="rounded-full bg-white/95 px-4 py-1.5 text-xs font-medium text-gray-700 opacity-0 shadow-md transition-all duration-300 group-hover:opacity-100 dark:bg-gray-800/95 dark:text-gray-300">
                 点击查看详情
               </span>
             </div>
@@ -161,7 +161,7 @@ export function SandboxCard({ item, showCreator = false }: SandboxCardProps) {
                     {item.creator.name?.[0]?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <span className="max-w-[60px] truncate">
+                <span className="max-w-15 truncate">
                   {item.creator.name || "未知"}
                 </span>
               </div>

@@ -69,6 +69,7 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(messages),
     tools: activeTools,
     stopWhen: stepCountIs(5),
+    maxOutputTokens: "codeSandbox" in activeTools ? 32768 : undefined,
     // Passthrough all extra options directly to streamText
     providerOptions: {
       [providerName]: extraOptions,

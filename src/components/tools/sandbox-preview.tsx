@@ -6,7 +6,6 @@ import {
   SandpackCodeEditor,
   SandpackPreview,
   useSandpack,
-  SandpackPredefinedTemplate,
 } from "@codesandbox/sandpack-react";
 import {
   Copy,
@@ -19,218 +18,21 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  TEMPLATE_CONFIG,
+  processFiles,
+  shouldInjectTailwind,
+} from "./sandbox-utils";
+import type {
+  SandpackFileConfig,
+  SupportedTemplate,
+  CodeSandboxOutput,
+} from "./sandbox-utils";
 
-// =============================================================================
-// Types
-// =============================================================================
-
-/**
- * File configuration for Sandpack
- */
-export interface SandpackFileConfig {
-  code: string;
-  hidden?: boolean;
-  active?: boolean;
-  readOnly?: boolean;
-}
-
-/**
- * Supported template types
- */
-export type SupportedTemplate =
-  | "static"
-  | "react"
-  | "react-ts"
-  | "vanilla"
-  | "vanilla-ts"
-  | "vue"
-  | "vue-ts";
-
-/**
- * Code sandbox output data structure
- */
-export interface CodeSandboxOutput {
-  files: Record<string, SandpackFileConfig>;
-  title: string;
-  template: SupportedTemplate;
-  dependencies?: Record<string, string>;
-}
+// Re-export types for backward compatibility
+export type { SandpackFileConfig, SupportedTemplate, CodeSandboxOutput };
 
 type TabType = "preview" | "code";
-
-// =============================================================================
-// Template Configuration
-// =============================================================================
-
-interface TemplateConfigBase {
-  entryFile: string;
-  sandpackTemplate: SandpackPredefinedTemplate;
-  boilerplate?: Record<string, string>;
-}
-
-interface ReactTemplateConfig extends TemplateConfigBase {
-  appPattern: RegExp;
-  indexFile: string;
-  generateIndex: (appPath: string) => string;
-}
-
-type TemplateConfig = TemplateConfigBase | ReactTemplateConfig;
-
-const TEMPLATE_CONFIG: Record<SupportedTemplate, TemplateConfig> = {
-  static: {
-    entryFile: "/index.html",
-    sandpackTemplate: "static",
-    boilerplate: {
-      "/index.html": `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Preview</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body>
-  <div id="app"></div>
-  <script src="index.js"></script>
-</body>
-</html>`,
-      "/index.js": `// Your code here`,
-    },
-  },
-  react: {
-    entryFile: "/App.js",
-    sandpackTemplate: "react",
-    appPattern: /\/(?:src\/)?App\.jsx?$/,
-    indexFile: "/index.js",
-    generateIndex: (appPath: string) => {
-      const importPath = appPath
-        .replace(/\.(js|jsx)$/, "")
-        .replace(/^\//, "./");
-      return `import React, { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import App from "${importPath}";
-
-const root = createRoot(document.getElementById("root"));
-root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);`;
-    },
-  },
-  "react-ts": {
-    entryFile: "/App.tsx",
-    sandpackTemplate: "react-ts",
-    appPattern: /\/(?:src\/)?App\.tsx?$/,
-    indexFile: "/index.tsx",
-    generateIndex: (appPath: string) => {
-      const importPath = appPath
-        .replace(/\.(ts|tsx)$/, "")
-        .replace(/^\//, "./");
-      return `import React, { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import App from "${importPath}";
-
-const root = createRoot(document.getElementById("root")!);
-root.render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);`;
-    },
-  },
-  vue: {
-    entryFile: "/src/App.vue",
-    sandpackTemplate: "vue",
-  },
-  "vue-ts": {
-    entryFile: "/src/App.vue",
-    sandpackTemplate: "vue-ts",
-  },
-  vanilla: {
-    entryFile: "/index.js",
-    sandpackTemplate: "vanilla",
-  },
-  "vanilla-ts": {
-    entryFile: "/index.ts",
-    sandpackTemplate: "vanilla-ts",
-  },
-};
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-function isReactTemplateConfig(
-  config: TemplateConfig,
-): config is ReactTemplateConfig {
-  return (
-    "appPattern" in config && "generateIndex" in config && "indexFile" in config
-  );
-}
-
-function normalizeFilePath(path: string): string {
-  return path.startsWith("/") ? path : `/${path}`;
-}
-
-function processFiles(
-  files: Record<string, SandpackFileConfig>,
-  template: SupportedTemplate,
-): Record<string, SandpackFileConfig> {
-  const config = TEMPLATE_CONFIG[template];
-  const processedFiles: Record<string, SandpackFileConfig> = {};
-
-  let hasActiveFile = false;
-  for (const [path, fileConfig] of Object.entries(files)) {
-    const normalizedPath = normalizeFilePath(path);
-    processedFiles[normalizedPath] = { ...fileConfig };
-    if (fileConfig.active) {
-      hasActiveFile = true;
-    }
-  }
-
-  if (template.startsWith("react") && isReactTemplateConfig(config)) {
-    const { appPattern, generateIndex, indexFile } = config;
-
-    const appFilePath = Object.keys(processedFiles).find((path) =>
-      appPattern.test(path),
-    );
-
-    if (appFilePath && !processedFiles[indexFile]) {
-      processedFiles[indexFile] = {
-        code: generateIndex(appFilePath),
-        hidden: true,
-      };
-    }
-  } else {
-    const hasEntryFile = Object.keys(processedFiles).some(
-      (path) =>
-        path === config.entryFile ||
-        (template === "static" && path.includes("index.html")) ||
-        (template.startsWith("vue") && path.includes("App.vue")),
-    );
-
-    if (!hasEntryFile && config.boilerplate) {
-      for (const [path, code] of Object.entries(config.boilerplate)) {
-        if (!processedFiles[path]) {
-          processedFiles[path] = { code, hidden: true };
-        }
-      }
-    }
-  }
-
-  // Note: Tailwind CSS injection is handled via externalResources in SandpackProvider
-  // The HTML file injection approach doesn't work for bundled templates (react, vue, etc.)
-
-  if (!hasActiveFile) {
-    const firstKey = Object.keys(processedFiles)[0];
-    if (firstKey) {
-      processedFiles[firstKey] = { ...processedFiles[firstKey], active: true };
-    }
-  }
-
-  return processedFiles;
-}
 
 // =============================================================================
 // Sub-Components
@@ -355,22 +157,6 @@ ActionButtons.displayName = "ActionButtons";
 // Main Sandpack Renderer (Exported)
 // =============================================================================
 
-/**
- * Check if Tailwind CSS should be injected via CDN
- * Always inject by default unless CDN is already present in files
- */
-function shouldInjectTailwind(
-  files: Record<string, SandpackFileConfig>,
-): boolean {
-  // Check if any file already contains the Tailwind CDN
-  const hasTailwindCDN = Object.values(files).some((file) =>
-    file.code.includes("cdn.tailwindcss.com"),
-  );
-
-  // Always inject unless CDN is already present
-  return !hasTailwindCDN;
-}
-
 export interface SandpackRendererProps {
   files: Record<string, SandpackFileConfig>;
   template: SupportedTemplate;
@@ -446,7 +232,7 @@ export const SandpackRenderer = memo(
     // Always inject by default to ensure styles work even if AI forgets to add tailwindcss to dependencies
     const externalResources = useMemo(() => {
       if (shouldInjectTailwind(files)) {
-        return ["https://cdn.tailwindcss.com"];
+        return ["https://cdn.tailwindcss.com?file=.js"];
       }
       return undefined;
     }, [files]);
