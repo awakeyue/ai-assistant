@@ -10,7 +10,7 @@ import { QuickPrompts } from "./quick-prompts";
 import { useModelStore, useChatStatusStore } from "@/store/chat";
 import { useChatCapabilitiesStore } from "@/store/chat-capabilities";
 import { DefaultChatTransport } from "ai";
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollToBottomButton } from "@/components/custom/scroll-to-bottom-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -64,8 +64,13 @@ export default function ChatArea({
 
   const { currentModelId } = useModelStore();
   const { createdChatIds, markAsCreated, resetKey } = useChatStatusStore();
-  const { isNavigating, navigatingToChatId, setNavigating, isMobile } =
-    useUIStore();
+  const {
+    isNavigating,
+    navigatingToChatId,
+    setNavigating,
+    isMobile,
+    isIncognito,
+  } = useUIStore();
 
   const stableId = useMemo(
     () => (resetKey ? serverChatId || nanoid(10) : serverChatId || nanoid(10)),
@@ -113,7 +118,9 @@ export default function ChatArea({
       api: "/api/chat",
     }),
     onFinish: async ({ messages }) => {
-      await saveChatMessages(stableId, messages);
+      if (!isIncognito) {
+        await saveChatMessages(stableId, messages);
+      }
     },
   });
 
@@ -145,11 +152,11 @@ export default function ChatArea({
       }
 
       setMessages(newMessages);
-      if (stableId) {
+      if (stableId && !isIncognito) {
         saveChatMessages(stableId, newMessages);
       }
     },
-    [messages, setMessages, stableId],
+    [messages, setMessages, stableId, isIncognito],
   );
 
   // Handle tool state changes - update the tool output in messages
@@ -183,11 +190,11 @@ export default function ChatArea({
       setMessages(updatedMessages);
 
       // Persist the updated messages
-      if (stableId) {
+      if (stableId && !isIncognito) {
         saveChatMessages(stableId, updatedMessages);
       }
     },
-    [setMessages, stableId, messages],
+    [setMessages, stableId, messages, isIncognito],
   );
 
   // Register the callback to zustand store
@@ -325,7 +332,7 @@ export default function ChatArea({
       },
     );
 
-    if (!serverChatId && !createdChatIds[stableId]) {
+    if (!serverChatId && !createdChatIds[stableId] && !isIncognito) {
       markAsCreated(stableId);
       console.log("Creating new chat");
       window.history.replaceState(null, "", `/chat/${stableId}`);
@@ -361,7 +368,7 @@ export default function ChatArea({
   }
 
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-5xl flex-1 flex-col overflow-hidden p-2 pt-4">
+    <div className="relative mx-auto flex h-full w-full max-w-5xl flex-1 flex-col overflow-hidden p-2 pt-6">
       {messages.length === 0 ? (
         <EmptyState>
           <QuickPrompts onSelect={(prompt) => handleSendMessage(prompt, [])} />
@@ -431,6 +438,13 @@ export default function ChatArea({
         visible={showScrollButton && messages.length > 0}
         loading={status === "streaming"}
       />
+
+      {isIncognito && (
+        <div className="text-muted-foreground flex items-center justify-center gap-1.5 text-xs">
+          <EyeOff size={12} className="shrink-0" />
+          <span>无痕模式</span>
+        </div>
+      )}
 
       <InputBox
         onSubmit={handleSendMessage}

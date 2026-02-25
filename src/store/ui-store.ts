@@ -19,6 +19,10 @@ interface UIStore {
   isNavigating: boolean;
   navigatingToChatId: string | null;
   setNavigating: (isNavigating: boolean, chatId?: string | null) => void;
+  // Incognito mode state
+  isIncognito: boolean;
+  setIncognito: (isIncognito: boolean) => void;
+  toggleIncognito: () => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -58,4 +62,8 @@ export const useUIStore = create<UIStore>((set) => ({
   navigatingToChatId: null,
   setNavigating: (isNavigating, chatId = null) =>
     set({ isNavigating, navigatingToChatId: chatId }),
+  // Incognito mode state
+  isIncognito: false,
+  setIncognito: (isIncognito) => set({ isIncognito }),
+  toggleIncognito: () => set((state) => ({ isIncognito: !state.isIncognito })),
 }));

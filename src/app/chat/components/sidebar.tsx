@@ -7,6 +7,7 @@ import {
   Loader2,
   PanelLeft,
   Pencil,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +27,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useModelStore, useChatStatusStore } from "@/store/chat";
 import { deleteChat, getUserChatList, updateChatTitle } from "@/actions/chat";
@@ -56,6 +63,8 @@ interface SidebarContentProps {
   handleSignOut: () => void;
   isLoadingChatList: boolean;
   onViewAllHistory: () => void;
+  isIncognito: boolean;
+  onToggleIncognito: () => void;
 }
 
 const SidebarContent = ({
@@ -74,6 +83,8 @@ const SidebarContent = ({
   handleSignOut,
   isLoadingChatList,
   onViewAllHistory,
+  isIncognito,
+  onToggleIncognito,
 }: SidebarContentProps) => {
   const MAX_DISPLAY = 20;
   const displayChats = chatHistorys?.slice(0, MAX_DISPLAY) ?? [];
@@ -119,27 +130,56 @@ const SidebarContent = ({
           )}
         </div>
 
-        {/* New Chat button */}
-        <Button
-          onClick={handleCreateChat}
-          variant="outline"
-          size="sm"
-          disabled={isLoading && navigatingToChatId === null}
+        {/* New Chat button & Incognito toggle */}
+        <div
           className={cn(
-            "w-full gap-2",
-            !inSheet && isSidebarCollapsed
-              ? "justify-center px-0"
-              : "justify-start",
+            "flex gap-1.5",
+            !inSheet && isSidebarCollapsed ? "flex-col" : "flex-row",
           )}
-          title={!inSheet && isSidebarCollapsed ? "新建聊天" : ""}
         >
-          {isLoading && navigatingToChatId === null ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : (
-            <Plus size={18} />
-          )}
-          {(inSheet || !isSidebarCollapsed) && "新建聊天"}
-        </Button>
+          <Button
+            onClick={handleCreateChat}
+            variant="outline"
+            size="sm"
+            disabled={isLoading && navigatingToChatId === null}
+            className={cn(
+              "flex-1 gap-2",
+              !inSheet && isSidebarCollapsed
+                ? "justify-center px-0"
+                : "justify-start",
+            )}
+            title={!inSheet && isSidebarCollapsed ? "新建聊天" : ""}
+          >
+            {isLoading && navigatingToChatId === null ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Plus size={18} />
+            )}
+            {(inSheet || !isSidebarCollapsed) && "新建聊天"}
+          </Button>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onToggleIncognito}
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8 shrink-0 transition-colors",
+                    isIncognito
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground opacity-80",
+                  )}
+                >
+                  <EyeOff size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {isIncognito ? "无痕模式已开启 · 聊天不会保存" : "开启无痕模式"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       {/* Chat History */}
@@ -260,6 +300,8 @@ export default function Sidebar() {
     setNavigating,
     isMobileSidebarOpen,
     setMobileSidebarOpen,
+    isIncognito,
+    toggleIncognito,
   } = useUIStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -464,6 +506,8 @@ export default function Sidebar() {
               handleSignOut={handleSignOut}
               isLoadingChatList={isLoadingChatList}
               onViewAllHistory={handleViewAllHistory}
+              isIncognito={isIncognito}
+              onToggleIncognito={toggleIncognito}
             />
           </SheetContent>
         </Sheet>
@@ -490,6 +534,8 @@ export default function Sidebar() {
         handleSignOut={handleSignOut}
         isLoadingChatList={isLoadingChatList}
         onViewAllHistory={handleViewAllHistory}
+        isIncognito={isIncognito}
+        onToggleIncognito={toggleIncognito}
       />
       {RenameDialog}
     </>
