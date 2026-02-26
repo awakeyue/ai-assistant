@@ -94,14 +94,26 @@ const ChatMessage = memo(
                   isStreaming={isStreaming && isLatest}
                 />
               );
-            case "reasoning":
+            case "reasoning": {
+              // Check if any text part appears after this reasoning block,
+              // which means reasoning has definitely finished
+              const hasFollowingContent = message.parts
+                .slice(idx + 1)
+                .some(
+                  (p) =>
+                    (p.type === "text" && (p as TextUIPart).text.length > 0) ||
+                    p.type === "file" ||
+                    "toolCallId" in p,
+                );
               return (
                 <ReasoningBlock
                   key={key}
                   reasonPart={part}
                   isStreaming={!!isStreaming}
+                  hasFollowingContent={hasFollowingContent}
                 />
               );
+            }
             case "file":
               return <FileBlock key={key} filePart={part} />;
             case "tool-gomokuGame":
@@ -229,9 +241,11 @@ const ReasoningBlock = memo(
   ({
     reasonPart,
     isStreaming,
+    hasFollowingContent,
   }: {
     reasonPart: ReasoningUIPart;
     isStreaming: boolean;
+    hasFollowingContent: boolean;
   }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
@@ -239,12 +253,18 @@ const ReasoningBlock = memo(
 
     if (!text) return null;
 
-    const isReasoning = reasonPart.state === "streaming" && isStreaming;
+    // Reasoning is active only when:
+    // 1. The message is still streaming
+    // 2. The reasoning part state is "streaming" (not "done")
+    // 3. No subsequent content (text/file/tool) has appeared yet
+    //    (if following content exists, reasoning must have finished regardless of state)
+    const isReasoning =
+      isStreaming && reasonPart.state === "streaming" && !hasFollowingContent;
     const showBrainIcon = !isOpen && !isHovered;
     const showChevronIcon = isHovered || isOpen;
 
     return (
-      <div className="block-fade-in my-2">
+      <div className="block-fade-in mb-2">
         <button
           onClick={() => setIsOpen(!isOpen)}
           onMouseEnter={() => setIsHovered(true)}
@@ -308,7 +328,7 @@ const ReasoningBlock = memo(
               >
                 <ReactMarkdown
                   remarkPlugins={remarkPlugins}
-                  components={markdownComponents}
+                  components={reasoningMarkdownComponents}
                 >
                   {text}
                 </ReactMarkdown>
@@ -549,6 +569,38 @@ const markdownComponents: Components = {
     </a>
   ),
   hr: () => <hr className="my-6 border-gray-200" />,
+};
+
+// Compact markdown components for reasoning/thinking blocks — tighter spacing
+const reasoningMarkdownComponents: Components = {
+  ...markdownComponents,
+  p: ({ children }) => <p className="mb-1.5 leading-5 last:mb-0">{children}</p>,
+  ul: ({ children }) => (
+    <ul className="mb-1.5 list-disc space-y-1 pl-5">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="mb-1.5 list-decimal space-y-1 pl-5">{children}</ol>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="my-2 border-l-4 border-gray-300 bg-gray-50 py-1 pl-3 text-gray-600 italic">
+      {children}
+    </blockquote>
+  ),
+  h1: ({ children }) => (
+    <h1 className="mt-3 mb-2 border-b pb-1 text-base font-bold tracking-tight text-gray-700">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="mt-2.5 mb-1.5 text-sm font-semibold tracking-tight text-gray-700">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="mt-2 mb-1 text-sm font-semibold text-gray-700">
+      {children}
+    </h3>
+  ),
 };
 
 // Separate component for Markdown rendering
